@@ -1,262 +1,182 @@
-# Execution: C2 - Video upload and frame extraction
+# Execution: C2 - Video Upload and Frame Extraction
 
-    ## Goal
+## Goal
 
-    Implement local video file acceptance and deterministic frame sampling suitable for 30 second to 2 minute clips.
+Implement local video file acceptance and deterministic timestamped frame sampling for 30 second to 2 minute clips.
 
-    ## Why This Exists
+## Why This Exists
 
-    Caption Compass is being built for AMD Developer Hackathon: ACT II Track 2. The judging surface is factual accuracy and tone match across four required styles. This gate keeps implementation focused on the smallest useful slice that improves judge-readiness without leaking private research or overbuilding.
+Caption Compass depends on a stable evidence layer. C2 produces the inspectable frame anchors that C3 uses to build a factual scene core. Later captions should be traceable back to sampled evidence instead of free-floating model interpretation.
 
-    ## Source-of-Truth References
+This gate should make the first judge-visible proof point possible:
 
-    - Public repository: `8088cruz/caption-compass`
-    - Repository URL: https://github.com/8088cruz/caption-compass
-    - Track 2 target: Video Captioning
-    - Product thesis: one factual scene core, four tonal bearings, built-in accuracy and tone checks
-    - Required tones: formal, sarcastic, humorous-tech, humorous-non-tech
-    - Preferred stack: Python, Streamlit, ffmpeg, Fireworks AI API, Gemma when available, Docker
-    - README gate policy: `docs/README_GATE_POLICY.md`
-    - Current gate prompt: `docs/implementation-prompts/gate-c2.prompt.md`
-    - Current todo prompt: `docs/implementation-prompts/todos/c2-t01-video-upload-and-frame-sampling.prompt.md`
+```text
+video -> timestamped frame evidence packet
+```
 
-    ## Scope
+## Source-of-Truth References
 
-    - Accept a local video path or uploaded file.
+- `SKILL.md`
+- `docs/README_GATE_POLICY.md`
+- `docs/implementation-prompts/gate-c2.prompt.md`
+- `docs/implementation-prompts/todos/c2-t01-video-upload-and-frame-sampling.prompt.md`
+
+## Scope
+
+- Accept a local video path or uploaded file.
+- Validate a short-video target range of 30 seconds to 2 minutes when duration metadata is available.
 - Sample a bounded number of frames deterministically.
-- Return frame metadata without leaking local paths in public outputs.
+- Produce stable `frame_id` values and `timestamp_seconds` values.
+- Save or expose frames through safe relative artifact references only.
+- Return frame metadata without leaking local filesystem paths.
 - Fail with clear errors when ffmpeg is unavailable or input is invalid.
 
-    ## Out of Scope
+## Out of Scope
 
-    - Scene understanding
+- Scene understanding
 - Caption generation
-- Audio transcription unless clips force it
+- Provider calls
+- Audio transcription unless later clips clearly require it
 - Cloud storage
+- Any claim that sampled frames capture every event in the video
 
-    ## Prerequisites
+## Prerequisites
 
-    - Complete prior gates in order unless explicitly running C0.
-    - Keep repository public-safe and MIT-compatible.
-    - Keep future work under planned/roadmap language only.
-    - Use stub or deterministic behavior when real Fireworks credentials are unavailable.
-    - Read `SKILL.md` before implementing.
-    - Read `docs/README_GATE_POLICY.md` before editing README.
+- C1 scaffold exists.
+- `ffmpeg` or an equivalent local frame extraction path is available.
+- Stub/test mode can run without network.
+- README gate policy has been read before README edits.
 
-    ## Files/Packages Likely Touched
+## Files/Packages Likely Touched
 
-    ```text
-    app video modules
-ffmpeg wrapper
-sample fixtures
-tests
-    ```
+```text
+app/video.py
+app/contracts.py
+tests/test_video.py
+tests/fixtures/
+README.md
+```
 
-    ## Commands or UI Actions Added
+## Commands or UI Actions Added
 
-    Gate-specific commands or UI controls should be minimal. Prefer a working local command, test, or Streamlit interaction over broad architecture.
+Suggested verification command:
 
-    Suggested verification command:
+```bash
+python -m pytest -k "video or frame or sampling"
+```
 
-    ```bash
-    python -m pytest -k 'video or frame or sampling'
-    ```
+## Data Contracts
 
-    ## Data Contracts
+### Frame Evidence Packet
 
-    The final project should converge on these public JSON contracts. This gate should implement only the relevant subset:
+C2 should produce this contract or a clearly equivalent typed model:
 
-    ```json
+```json
+{
+  "video_id": "stable-video-id",
+  "duration_seconds": 42.0,
+  "sample_strategy": {
+    "mode": "bounded_uniform",
+    "max_frames": 8,
+    "requested_range_seconds": [30, 120]
+  },
+  "frames": [
     {
-      "scene_core": {
-        "summary": "factual, style-free scene description",
-        "observed_entities": [],
-        "observed_actions": [],
-        "setting": null,
-        "visible_text": [],
-        "uncertainties": []
-      },
-      "captions": {
-        "formal": "...",
-        "sarcastic": "...",
-        "humorous_tech": "...",
-        "humorous_non_tech": "..."
-      },
-      "evaluation": {
-        "formal": {"factual_accuracy": 1, "tone_match": 1, "clarity": 1, "issues": []}
-      }
+      "frame_id": "f001",
+      "timestamp_seconds": 0.0,
+      "ordinal": 1,
+      "image_ref": "artifacts/frames/f001.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "optional-content-hash"
     }
-    ```
+  ],
+  "warnings": []
+}
+```
 
-    This gate should implement only the pieces required by its scope.
+### Public-Safe Output Rule
 
-    ### Scene Core Contract
+`image_ref` must be relative or UI-safe. Public JSON, screenshots, and README examples must not include absolute local paths such as `/home/...`, `/workspace/...`, or temporary upload paths.
 
-    The scene core is style-free. It should contain observed or cautiously inferred facts only:
+## Service Boundary
 
-    ```json
-    {
-      "summary": "short factual description",
-      "observed_entities": ["person", "object"],
-      "observed_actions": ["walks", "points"],
-      "setting": "visible setting or null",
-      "visible_text": [],
-      "audio_notes": [],
-      "uncertainties": ["what is unclear"],
-      "frame_evidence": []
-    }
-    ```
+- Frame extraction is separate from scene reasoning.
+- C2 produces evidence packets only.
+- C2 does not create scene summaries, captions, jokes, scores, or repair output.
+- UI may display extracted frames later, but C2 should remain usable as a service with tests.
 
-    ### Caption Contract
+## Provider/API Boundary
 
-    Captions must preserve the same factual core while changing only presentation style:
+No Fireworks/Gemma call is allowed in C2.
 
-    ```json
-    {
-      "formal": "neutral professional caption",
-      "sarcastic": "dry but fact-preserving caption",
-      "humorous_tech": "developer/tech humor caption",
-      "humorous_non_tech": "general audience humorous caption"
-    }
-    ```
+## Prompt Contracts
 
-    ### Evaluation Contract
+No model prompt is required in C2.
 
-    Evaluator output must be judge-legible:
+## Tests
 
-    ```json
-    {
-      "caption_key": {
-        "factual_accuracy": 1,
-        "tone_match": 1,
-        "clarity": 1,
-        "issues": [],
-        "rewrite_hint": null
-      }
-    }
-    ```
+Add deterministic tests for:
 
-    ## Service Boundary
+- valid short video returns a `video_id`, duration, and bounded frame list
+- each frame has `frame_id`, `timestamp_seconds`, `ordinal`, and `image_ref`
+- frame IDs are stable for the same fixture and sampling options
+- invalid input fails with a clear error
+- missing ffmpeg is surfaced as a clear dependency error
+- public output does not include absolute local paths
 
-    - Keep UI thin.
-    - Keep provider calls behind a small adapter or service.
-    - Keep prompt construction separate from Streamlit widgets.
-    - Keep data contracts testable without network.
-    - Keep local file paths out of public JSON and screenshots.
-    - Keep frame extraction separate from scene reasoning.
-    - Keep scene reasoning separate from tone rendering.
-    - Keep evaluation separate from generation.
+## README Update Requirements
 
-    ## Provider/API Boundary
+Update README.md to reflect this gate's actual completed behavior. Do not document future gates as implemented.
 
-    - Fireworks/Gemma calls require explicit `FIREWORKS_API_KEY`.
-    - Stub/test mode must work without network.
-    - Do not send secrets, private repo content, private docs, or local paths as model context.
-    - Provider outputs are draft until evaluated or shown as generated outputs.
+The README must include current gate status, working commands only, known limitations, and planned gates as future work.
 
-    ## Prompt Contracts
+## Acceptance Criteria
 
-    Prompts should:
+- A short fixture video can produce deterministic frame metadata.
+- The frame evidence packet is JSON-serializable.
+- No absolute local path appears in public output.
+- The output gives C3 enough evidence anchors to build a factual scene core.
 
-    - preserve factual core before style rendering
-    - make uncertainty explicit
-    - avoid invented details
-    - produce judge-friendly JSON
-    - keep humor accessible and non-obscure
-    - return strict JSON when a service expects JSON
-    - avoid internal project jargon in model-facing instructions
+## Reviewer Confidence Signal
 
-    ## Tests
+A reviewer should be able to see exactly what evidence was extracted, how frame IDs and timestamps are represented, how local paths are kept out of public output, how the gate was verified, and what remains deferred to C3 or later.
 
-    Add or preserve tests appropriate to this gate. Prefer deterministic tests for schemas, service behavior, and public-safe output.
+## Benchmark / Evidence Artifact
 
-    Suggested command:
+This gate should leave behind at least one concrete artifact:
 
-    ```bash
-    python -m pytest -k 'video or frame or sampling'
-    ```
+- passing frame-extraction tests
+- a sample frame evidence packet
+- a working command that extracts frames from a fixture video
+- a documented blocker with the exact dependency or input issue
 
-    ### Direct Service Tests
+## Demo Commands
 
-    Add direct tests for the smallest service involved in this gate. Tests should not require network unless the gate explicitly covers real provider integration.
+```bash
+python -m pytest -k "video or frame or sampling"
+```
 
-    ### Contract Tests
+## Expected Output
 
-    Validate JSON shape, required keys, and failure handling for malformed inputs.
+Timestamped frame evidence suitable for C3 scene-core construction.
 
-    ### Public-Safety Tests
+## Failure Cases
 
-    Where practical, assert outputs do not include local filesystem paths, secrets, private repo names, or private research terms.
+- Missing ffmpeg
+- Unsupported file type
+- Clip outside expected duration range
+- Corrupt or unreadable video
+- Sampling produces unstable IDs
+- Public output leaks local filesystem paths
+- Later code treats sampled frames as complete proof of every event
 
-    ### README Sync Test/Check
+## Stop/Gate Criteria
 
-    Manually inspect README after the gate. The README must not claim future gates are implemented.
+Stop if frame extraction requires network, stores private paths in JSON, starts scene reasoning, or claims complete video understanding.
 
-    ## README Update Requirements
+## Suggested Conventional Commit
 
-    Update README.md to reflect this gate's actual completed behavior. Do not document future gates as implemented.
-
-    The README must include current gate status, working commands only, known limitations, and planned gates as future work.
-
-    ## Acceptance Criteria
-
-    - Gate scope is complete.
-    - Tests or verification command pass, or blockers are documented.
-    - README is updated conservatively.
-    - No private or proprietary content is introduced.
-    - The project remains optimized for Track 2 accuracy and tone judging.
-    - The implementation can be explained in one minute to a hackathon judge.
-    - The next gate remains clearly separate.
-
-    ## Implementation Steps
-
-    1. Read `SKILL.md`.
-    2. Read `docs/README_GATE_POLICY.md`.
-    3. Read this execution document.
-    4. Inspect the current repo tree.
-    5. Identify the smallest files needed for this gate.
-    6. Add or update tests first when practical.
-    7. Implement only this gate.
-    8. Run the suggested verification command.
-    9. Update README with actual completed behavior only.
-    10. Report changed files, test results, risks, and next gate.
-
-    ## Reviewer Confidence Signal
-
-    A reviewer should be able to see exactly what changed, why it matters for Track 2 judging, how it was verified, and what remains planned.
-
-    ## Benchmark / Evidence Artifact
-
-    Each gate should leave behind at least one useful artifact: passing tests, a working command, sample JSON, screenshot-ready UI state, or README instructions.
-
-    ## Demo Commands
-
-    Use the simplest command that proves this gate. If no command exists yet, use `true` and document why.
-
-    ```bash
-    python -m pytest -k 'video or frame or sampling'
-    ```
-
-    ## Expected Output
-
-    Public-safe project files and/or demo behavior that prove this gate only. Outputs should not include secrets, private repo paths, or private research references.
-
-    ## Failure Cases
-
-    - Missing Fireworks key
-    - Missing ffmpeg
-    - Invalid video input
-    - Model output is malformed JSON
-    - Caption invents facts
-    - Tone is ambiguous
-    - README claims future work is done
-
-    ## Stop/Gate Criteria
-
-    Stop if implementation broadens beyond this gate, weakens public-safe boundaries, removes README synchronization, or claims completion before the behavior works.
-
-    ## Suggested Conventional Commit
-
-    ```text
-    feat(video): add frame sampling pipeline
-    ```
+```text
+feat(video): add timestamped frame extraction
+```

@@ -1,262 +1,224 @@
-# Execution: C3 - Factual scene core JSON contract
+# Execution: C3 - Factual Scene Core JSON Contract
 
-    ## Goal
+## Goal
 
-    Define and implement the factual scene core contract that separates observed facts from style, jokes, and interpretation.
+Define and implement the factual scene core contract that separates observed facts from style, jokes, and interpretation.
 
-    ## Why This Exists
+## Why This Exists
 
-    Caption Compass is being built for AMD Developer Hackathon: ACT II Track 2. The judging surface is factual accuracy and tone match across four required styles. This gate keeps implementation focused on the smallest useful slice that improves judge-readiness without leaking private research or overbuilding.
+Track 2 rewards factual accuracy and tone match. The safest implementation path is:
 
-    ## Source-of-Truth References
+```text
+timestamped frame evidence -> one style-free factual scene core -> four tone renderings
+```
 
-    - Public repository: `8088cruz/caption-compass`
-    - Repository URL: https://github.com/8088cruz/caption-compass
-    - Track 2 target: Video Captioning
-    - Product thesis: one factual scene core, four tonal bearings, built-in accuracy and tone checks
-    - Required tones: formal, sarcastic, humorous-tech, humorous-non-tech
-    - Preferred stack: Python, Streamlit, ffmpeg, Fireworks AI API, Gemma when available, Docker
-    - README gate policy: `docs/README_GATE_POLICY.md`
-    - Current gate prompt: `docs/implementation-prompts/gate-c3.prompt.md`
-    - Current todo prompt: `docs/implementation-prompts/todos/c3-t01-factual-scene-core-contract.prompt.md`
+C3 is the boundary where visible evidence becomes a compact factual core. It must preserve uncertainty and block unsupported inference before any humorous or stylistic generation happens.
 
-    ## Scope
+## Source-of-Truth References
 
-    - Create a JSON contract for factual scene core.
-- Separate observed entities, actions, setting, text/speech if available, uncertainty, and caveats.
+- `SKILL.md`
+- `docs/README_GATE_POLICY.md`
+- `docs/implementation-prompts/gate-c3.prompt.md`
+- `docs/implementation-prompts/todos/c3-t01-factual-scene-core-contract.prompt.md`
+- C2 frame evidence packet from `docs/execution/02-video-frame-ingestion.execution.md`
+
+## Scope
+
+- Create a JSON contract for factual scene core.
+- Consume timestamped frame evidence from C2.
+- Include stable `scene_core_id`.
+- Separate observed entities, actions, setting, visible text, optional audio notes, uncertainties, and unsupported inferences.
+- Link factual claims to `frame_id` evidence when possible.
+- Prevent style words, jokes, sarcasm, emotion inference, motive inference, and unsupported causality from entering the factual core.
 - Allow stub/test mode without network.
-- Prevent style words or jokes from entering the factual core.
 
-    ## Out of Scope
+## Out of Scope
 
-    - Four-tone rendering
+- Four-tone rendering
 - Evaluator scoring
-- Retry loop
+- Retry/repair loop
 - Fine-tuning
+- Broad scene interpretation beyond visible/audible evidence
 
-    ## Prerequisites
+## Prerequisites
 
-    - Complete prior gates in order unless explicitly running C0.
-    - Keep repository public-safe and MIT-compatible.
-    - Keep future work under planned/roadmap language only.
-    - Use stub or deterministic behavior when real Fireworks credentials are unavailable.
-    - Read `SKILL.md` before implementing.
-    - Read `docs/README_GATE_POLICY.md` before editing README.
+- C2 frame evidence packet exists.
+- Provider adapter or deterministic stub exists.
+- README gate policy has been read before README edits.
 
-    ## Files/Packages Likely Touched
+## Files/Packages Likely Touched
 
-    ```text
-    scene core schema
-Fireworks/Gemma adapter or stub
-prompt templates
-tests
-    ```
+```text
+app/contracts.py
+app/scene_core.py
+app/providers.py
+tests/test_scene_core.py
+README.md
+```
 
-    ## Commands or UI Actions Added
+## Commands or UI Actions Added
 
-    Gate-specific commands or UI controls should be minimal. Prefer a working local command, test, or Streamlit interaction over broad architecture.
+Suggested verification command:
 
-    Suggested verification command:
+```bash
+python -m pytest -k "scene_core or factual or schema"
+```
 
-    ```bash
-    python -m pytest -k 'scene_core or factual or schema'
-    ```
+## Data Contracts
 
-    ## Data Contracts
+### Factual Scene Core
 
-    The final project should converge on these public JSON contracts. This gate should implement only the relevant subset:
+C3 should implement this contract or a clearly equivalent typed model:
 
-    ```json
+```json
+{
+  "scene_core_id": "stable-scene-core-id",
+  "source_video_id": "stable-video-id",
+  "summary": "short factual description without style",
+  "observed_entities": [
     {
-      "scene_core": {
-        "summary": "factual, style-free scene description",
-        "observed_entities": [],
-        "observed_actions": [],
-        "setting": null,
-        "visible_text": [],
-        "uncertainties": []
-      },
-      "captions": {
-        "formal": "...",
-        "sarcastic": "...",
-        "humorous_tech": "...",
-        "humorous_non_tech": "..."
-      },
-      "evaluation": {
-        "formal": {"factual_accuracy": 1, "tone_match": 1, "clarity": 1, "issues": []}
-      }
+      "label": "person",
+      "evidence_frame_ids": ["f001"],
+      "confidence": "medium"
     }
-    ```
-
-    This gate should implement only the pieces required by its scope.
-
-    ### Scene Core Contract
-
-    The scene core is style-free. It should contain observed or cautiously inferred facts only:
-
-    ```json
+  ],
+  "observed_actions": [
     {
-      "summary": "short factual description",
-      "observed_entities": ["person", "object"],
-      "observed_actions": ["walks", "points"],
-      "setting": "visible setting or null",
-      "visible_text": [],
-      "audio_notes": [],
-      "uncertainties": ["what is unclear"],
-      "frame_evidence": []
+      "label": "walks across the room",
+      "evidence_frame_ids": ["f001", "f002"],
+      "confidence": "medium"
     }
-    ```
-
-    ### Caption Contract
-
-    Captions must preserve the same factual core while changing only presentation style:
-
-    ```json
+  ],
+  "setting": {
+    "label": "indoor room",
+    "evidence_frame_ids": ["f001"],
+    "confidence": "low"
+  },
+  "visible_text": [
     {
-      "formal": "neutral professional caption",
-      "sarcastic": "dry but fact-preserving caption",
-      "humorous_tech": "developer/tech humor caption",
-      "humorous_non_tech": "general audience humorous caption"
+      "text": "visible sign text",
+      "evidence_frame_ids": ["f003"],
+      "confidence": "medium"
     }
-    ```
-
-    ### Evaluation Contract
-
-    Evaluator output must be judge-legible:
-
-    ```json
+  ],
+  "audio_notes": [],
+  "uncertainties": [
     {
-      "caption_key": {
-        "factual_accuracy": 1,
-        "tone_match": 1,
-        "clarity": 1,
-        "issues": [],
-        "rewrite_hint": null
-      }
+      "description": "small background object is unclear",
+      "evidence_frame_ids": ["f004"]
     }
-    ```
+  ],
+  "unsupported_inferences": [
+    {
+      "claim": "person is frustrated",
+      "reason": "emotion is not directly established by the sampled frames",
+      "handling": "omit from factual core and captions unless later evidence supports it"
+    }
+  ]
+}
+```
 
-    ## Service Boundary
+### Unsupported Inference Handling
 
-    - Keep UI thin.
-    - Keep provider calls behind a small adapter or service.
-    - Keep prompt construction separate from Streamlit widgets.
-    - Keep data contracts testable without network.
-    - Keep local file paths out of public JSON and screenshots.
-    - Keep frame extraction separate from scene reasoning.
-    - Keep scene reasoning separate from tone rendering.
-    - Keep evaluation separate from generation.
+Unsupported inferences are not facts. They are rejected or quarantined claims that should not be used by C4 unless converted into a supported observation.
 
-    ## Provider/API Boundary
+Examples:
 
-    - Fireworks/Gemma calls require explicit `FIREWORKS_API_KEY`.
-    - Stub/test mode must work without network.
-    - Do not send secrets, private repo content, private docs, or local paths as model context.
-    - Provider outputs are draft until evaluated or shown as generated outputs.
+| Unsupported claim | Safer handling |
+| --- | --- |
+| `the person is angry` | `the person gestures quickly` if visible |
+| `the object is expensive` | `a shiny object is visible` if supported |
+| `the scene is a failure` | describe visible actions only |
+| `the speaker is confused` | use transcript or mark uncertainty |
 
-    ## Prompt Contracts
+## Service Boundary
 
-    Prompts should:
+- Scene core construction consumes C2 frame evidence.
+- Scene core construction returns facts, uncertainties, and rejected inferences.
+- It does not create jokes, tone, marketing language, final captions, evaluator scores, or repair output.
+- It must keep local file paths out of public JSON and screenshots.
 
-    - preserve factual core before style rendering
-    - make uncertainty explicit
-    - avoid invented details
-    - produce judge-friendly JSON
-    - keep humor accessible and non-obscure
-    - return strict JSON when a service expects JSON
-    - avoid internal project jargon in model-facing instructions
+## Provider/API Boundary
 
-    ## Tests
+If using Fireworks/Gemma, send only video-derived evidence and public-safe task instructions. Never send secrets, private docs, local paths, implementation pack contents, or private research material as model context.
 
-    Add or preserve tests appropriate to this gate. Prefer deterministic tests for schemas, service behavior, and public-safe output.
+## Prompt Contracts
 
-    Suggested command:
+The scene-core prompt must:
 
-    ```bash
-    python -m pytest -k 'scene_core or factual or schema'
-    ```
+- request observed facts only
+- require strict JSON
+- require evidence frame IDs for supported claims when available
+- mark ambiguous facts as uncertainty
+- place rejected guesses in `unsupported_inferences`
+- prohibit style, humor, sarcasm, emotion inference, motive inference, identity inference, and unsupported causality
+- avoid internal project jargon in model-facing instructions
 
-    ### Direct Service Tests
+## Tests
 
-    Add direct tests for the smallest service involved in this gate. Tests should not require network unless the gate explicitly covers real provider integration.
+Add deterministic tests for:
 
-    ### Contract Tests
+- required keys exist
+- `scene_core_id` is stable for the same fixture input
+- observed facts can reference C2 `frame_id` values
+- unsupported claims are placed in `unsupported_inferences` or omitted
+- style/joke language is absent from factual core
+- public output does not include absolute local paths, secrets, or private research terms
+- malformed provider JSON fails safely
 
-    Validate JSON shape, required keys, and failure handling for malformed inputs.
+## README Update Requirements
 
-    ### Public-Safety Tests
+Update README.md to reflect this gate's actual completed behavior. Do not document future gates as implemented.
 
-    Where practical, assert outputs do not include local filesystem paths, secrets, private repo names, or private research terms.
+The README must include current gate status, working commands only, known limitations, and planned gates as future work.
 
-    ### README Sync Test/Check
+## Acceptance Criteria
 
-    Manually inspect README after the gate. The README must not claim future gates are implemented.
+- Factual core can be produced in stub mode.
+- Factual core is separate from captions.
+- Factual claims can point back to frame evidence where possible.
+- Unsupported inferences are blocked from becoming caption facts.
+- Uncertainty is explicit.
 
-    ## README Update Requirements
+## Reviewer Confidence Signal
 
-    Update README.md to reflect this gate's actual completed behavior. Do not document future gates as implemented.
+A reviewer should be able to see exactly how the factual core was built from frame evidence, which claims are supported, which claims are uncertain or unsupported, how tone/style was excluded, how the gate was verified, and what remains deferred to C4 or later.
 
-    The README must include current gate status, working commands only, known limitations, and planned gates as future work.
+## Benchmark / Evidence Artifact
 
-    ## Acceptance Criteria
+This gate should leave behind at least one concrete artifact:
 
-    - Gate scope is complete.
-    - Tests or verification command pass, or blockers are documented.
-    - README is updated conservatively.
-    - No private or proprietary content is introduced.
-    - The project remains optimized for Track 2 accuracy and tone judging.
-    - The implementation can be explained in one minute to a hackathon judge.
-    - The next gate remains clearly separate.
+- passing scene-core contract tests
+- a sample factual scene core JSON fixture
+- a malformed-provider-output failure fixture
+- a sample `unsupported_inferences` case
+- a documented blocker with the exact provider, schema, or fixture issue
 
-    ## Implementation Steps
+## Demo Commands
 
-    1. Read `SKILL.md`.
-    2. Read `docs/README_GATE_POLICY.md`.
-    3. Read this execution document.
-    4. Inspect the current repo tree.
-    5. Identify the smallest files needed for this gate.
-    6. Add or update tests first when practical.
-    7. Implement only this gate.
-    8. Run the suggested verification command.
-    9. Update README with actual completed behavior only.
-    10. Report changed files, test results, risks, and next gate.
+```bash
+python -m pytest -k "scene_core or factual or schema"
+```
 
-    ## Reviewer Confidence Signal
+## Expected Output
 
-    A reviewer should be able to see exactly what changed, why it matters for Track 2 judging, how it was verified, and what remains planned.
+A style-free factual scene core that downstream caption generation can reuse without inventing facts.
 
-    ## Benchmark / Evidence Artifact
+## Failure Cases
 
-    Each gate should leave behind at least one useful artifact: passing tests, a working command, sample JSON, screenshot-ready UI state, or README instructions.
+- Scene core invents facts
+- Scene core includes jokes or sarcasm
+- Ambiguous evidence is overclaimed
+- Emotion or motive is inferred without support
+- Unsupported inferences leak into captions
+- Provider output is malformed JSON
 
-    ## Demo Commands
+## Stop/Gate Criteria
 
-    Use the simplest command that proves this gate. If no command exists yet, use `true` and document why.
+Stop if implementation cannot keep factual core and tone generation separate, or if unsupported inference handling is removed.
 
-    ```bash
-    python -m pytest -k 'scene_core or factual or schema'
-    ```
+## Suggested Conventional Commit
 
-    ## Expected Output
-
-    Public-safe project files and/or demo behavior that prove this gate only. Outputs should not include secrets, private repo paths, or private research references.
-
-    ## Failure Cases
-
-    - Missing Fireworks key
-    - Missing ffmpeg
-    - Invalid video input
-    - Model output is malformed JSON
-    - Caption invents facts
-    - Tone is ambiguous
-    - README claims future work is done
-
-    ## Stop/Gate Criteria
-
-    Stop if implementation broadens beyond this gate, weakens public-safe boundaries, removes README synchronization, or claims completion before the behavior works.
-
-    ## Suggested Conventional Commit
-
-    ```text
-    feat(scene): add factual scene core contract
-    ```
+```text
+feat(scene): add factual scene core contract
+```
