@@ -106,7 +106,7 @@ test -f docs/artifacts/c2-frame-evidence.sample.json
 Verify the C3 artifact exists with:
 
 ```bash
-test -f docs/artifacts/c3-scene-core.sample.json
+test -f docs/artifacts/c3-cooking-scene-core-8.json
 ```
 
 ## Planned Product Behavior
