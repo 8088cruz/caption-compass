@@ -1,0 +1,48 @@
+{
+  "extraction": {
+    "local_paths_included": false,
+    "status": "ok",
+    "tooling": "ffmpeg/ffprobe",
+    "warnings": []
+  },
+  "frames": [
+    {
+      "frame_id": "frame_0001",
+      "frame_ref": "frame://11027546-hd_1920_1080_30fps/frame_0001",
+      "timestamp_label": "00:03.154",
+      "timestamp_seconds": 3.154
+    },
+    {
+      "frame_id": "frame_0002",
+      "frame_ref": "frame://11027546-hd_1920_1080_30fps/frame_0002",
+      "timestamp_label": "00:09.462",
+      "timestamp_seconds": 9.462
+    },
+    {
+      "frame_id": "frame_0003",
+      "frame_ref": "frame://11027546-hd_1920_1080_30fps/frame_0003",
+      "timestamp_label": "00:15.771",
+      "timestamp_seconds": 15.771
+    },
+    {
+      "frame_id": "frame_0004",
+      "frame_ref": "frame://11027546-hd_1920_1080_30fps/frame_0004",
+      "timestamp_label": "00:22.079",
+      "timestamp_seconds": 22.079
+    }
+  ],
+  "gate": "C2",
+  "sampling": {
+    "requested_frame_count": 4,
+    "sampled_frame_count": 4,
+    "strategy": "center-of-equal-time-segments"
+  },
+  "schema_version": "c2.frame_evidence.v1",
+  "source_video": {
+    "duration_seconds": 25.233,
+    "frame_rate": 30.0,
+    "height": 1080,
+    "identifier": "11027546-hd_1920_1080_30fps.mp4",
+    "width": 1920
+  }
+}
