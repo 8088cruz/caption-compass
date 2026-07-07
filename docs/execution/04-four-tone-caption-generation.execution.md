@@ -1,262 +1,388 @@
-# Execution: C4 - Four-tone caption generation
+# Execution: C4 - Four-Tone Caption Generation
 
-    ## Goal
+## Goal
 
-    Generate exactly four captions from the same factual scene core: formal, sarcastic, humorous-tech, and humorous-non-tech.
+Generate exactly four captions from the same factual scene core:
 
-    ## Why This Exists
+1. formal
+2. sarcastic
+3. humorous-tech
+4. humorous-non-tech
 
-    Caption Compass is being built for AMD Developer Hackathon: ACT II Track 2. The judging surface is factual accuracy and tone match across four required styles. This gate keeps implementation focused on the smallest useful slice that improves judge-readiness without leaking private research or overbuilding.
+Each caption must preserve the same factual scene core while changing only presentation style.
 
-    ## Source-of-Truth References
+## Why This Exists
 
-    - Public repository: `8088cruz/caption-compass`
-    - Repository URL: https://github.com/8088cruz/caption-compass
-    - Track 2 target: Video Captioning
-    - Product thesis: one factual scene core, four tonal bearings, built-in accuracy and tone checks
-    - Required tones: formal, sarcastic, humorous-tech, humorous-non-tech
-    - Preferred stack: Python, Streamlit, ffmpeg, Fireworks AI API, Gemma when available, Docker
-    - README gate policy: `docs/README_GATE_POLICY.md`
-    - Current gate prompt: `docs/implementation-prompts/gate-c4.prompt.md`
-    - Current todo prompt: `docs/implementation-prompts/todos/c4-t01-four-tone-caption-contract.prompt.md`
+Track 2 is judged on factual accuracy and tone match. A basic caption generator may produce fluent text, but Caption Compass should be stronger because it explicitly separates:
 
-    ## Scope
+```text
+timestamped evidence -> factual scene core -> four tone renderings
+```
 
-    - Generate exactly the four required Track 2 tones.
-- Keep factual content aligned with the factual scene core.
-- Make tone differences judge-legible without obscure references.
+C4 is the first place the project becomes visibly different from a generic video summarizer. The judge should be able to see that the same facts survive across all four required tones.
+
+## Source-of-Truth References
+
+- `SKILL.md`
+- `docs/README_GATE_POLICY.md`
+- `docs/implementation-prompts/gate-c4.prompt.md`
+- `docs/implementation-prompts/todos/c4-t01-four-tone-caption-contract.prompt.md`
+- C3 factual scene core from `docs/execution/03-factual-scene-core.execution.md`
+
+## Scope
+
+- Generate exactly the four required Track 2 tones.
+- Use one `scene_core_id` for all four captions.
+- Preserve factual content from the C3 scene core.
+- Use uncertainty from C3 instead of inventing details.
+- Exclude C3 `unsupported_inferences` from caption facts.
+- Make tone differences obvious to an LLM judge.
+- Keep humor accessible, short, and non-obscure.
 - Return machine-readable JSON for UI and evaluator use.
 
-    ## Out of Scope
+## Out of Scope
 
-    - Evaluator/retry logic
+- Evaluator scoring
+- Retry/repair logic
 - Advanced humor models
 - User-customized styles
 - Non-required tones
+- Fine-tuning
+- New scene facts not present in the factual scene core
 
-    ## Prerequisites
+## Prerequisites
 
-    - Complete prior gates in order unless explicitly running C0.
-    - Keep repository public-safe and MIT-compatible.
-    - Keep future work under planned/roadmap language only.
-    - Use stub or deterministic behavior when real Fireworks credentials are unavailable.
-    - Read `SKILL.md` before implementing.
-    - Read `docs/README_GATE_POLICY.md` before editing README.
+- C3 factual scene core contract exists.
+- C3 exposes `scene_core_id`, observed facts, uncertainties, and `unsupported_inferences`.
+- Provider adapter or deterministic stub exists.
+- README gate policy has been read before README edits.
 
-    ## Files/Packages Likely Touched
+## Files/Packages Likely Touched
 
-    ```text
-    caption schema
-caption prompt templates
-Fireworks/Gemma adapter or stub
-tests
-    ```
+```text
+app/contracts.py
+app/captions.py
+app/providers.py
+app/prompts/
+tests/test_captions.py
+README.md
+```
 
-    ## Commands or UI Actions Added
+## Commands or UI Actions Added
 
-    Gate-specific commands or UI controls should be minimal. Prefer a working local command, test, or Streamlit interaction over broad architecture.
+Suggested verification command:
 
-    Suggested verification command:
+```bash
+python -m pytest -k "caption or tone or style"
+```
 
-    ```bash
-    python -m pytest -k 'caption or tone or style'
-    ```
+## Data Contracts
 
-    ## Data Contracts
+### Four-Tone Caption Set
 
-    The final project should converge on these public JSON contracts. This gate should implement only the relevant subset:
+C4 should implement this contract or a clearly equivalent typed model:
 
-    ```json
-    {
-      "scene_core": {
-        "summary": "factual, style-free scene description",
-        "observed_entities": [],
-        "observed_actions": [],
-        "setting": null,
-        "visible_text": [],
-        "uncertainties": []
-      },
-      "captions": {
-        "formal": "...",
-        "sarcastic": "...",
-        "humorous_tech": "...",
-        "humorous_non_tech": "..."
-      },
-      "evaluation": {
-        "formal": {"factual_accuracy": 1, "tone_match": 1, "clarity": 1, "issues": []}
-      }
+```json
+{
+  "scene_core_id": "stable-scene-core-id",
+  "source_video_id": "stable-video-id",
+  "captions": {
+    "formal": {
+      "text": "Neutral professional caption.",
+      "tone": "formal",
+      "facts_used": ["observed_actions[0]", "setting"],
+      "uncertainties_preserved": []
+    },
+    "sarcastic": {
+      "text": "Mild dry caption that keeps the same facts.",
+      "tone": "sarcastic",
+      "facts_used": ["observed_actions[0]", "setting"],
+      "uncertainties_preserved": []
+    },
+    "humorous_tech": {
+      "text": "Developer-friendly caption that keeps the same facts.",
+      "tone": "humorous-tech",
+      "facts_used": ["observed_actions[0]", "setting"],
+      "uncertainties_preserved": []
+    },
+    "humorous_non_tech": {
+      "text": "General-audience funny caption that keeps the same facts.",
+      "tone": "humorous-non-tech",
+      "facts_used": ["observed_actions[0]", "setting"],
+      "uncertainties_preserved": []
     }
-    ```
+  }
+}
+```
 
-    This gate should implement only the pieces required by its scope.
+### Factual Stability Rule
 
-    ### Scene Core Contract
+All four captions must be generated from the same `scene_core_id`. They may vary wording, rhythm, and tone, but they must not:
 
-    The scene core is style-free. It should contain observed or cautiously inferred facts only:
+- add entities absent from the factual scene core
+- add actions absent from the factual scene core
+- upgrade uncertainty into fact
+- use `unsupported_inferences` as caption facts
+- infer private emotion, intent, motive, identity, or causality
 
-    ```json
-    {
-      "summary": "short factual description",
-      "observed_entities": ["person", "object"],
-      "observed_actions": ["walks", "points"],
-      "setting": "visible setting or null",
-      "visible_text": [],
-      "audio_notes": [],
-      "uncertainties": ["what is unclear"],
-      "frame_evidence": []
-    }
-    ```
+## Tone Rubric
 
-    ### Caption Contract
+### Formal
 
-    Captions must preserve the same factual core while changing only presentation style:
+Purpose:
 
-    ```json
-    {
-      "formal": "neutral professional caption",
-      "sarcastic": "dry but fact-preserving caption",
-      "humorous_tech": "developer/tech humor caption",
-      "humorous_non_tech": "general audience humorous caption"
-    }
-    ```
+- Provide a neutral, professional caption or summary.
 
-    ### Evaluation Contract
+Required signals:
 
-    Evaluator output must be judge-legible:
+- clear, concise, objective wording
+- no jokes
+- no slang
+- no sarcasm
+- no exaggerated adjectives
 
-    ```json
-    {
-      "caption_key": {
-        "factual_accuracy": 1,
-        "tone_match": 1,
-        "clarity": 1,
-        "issues": [],
-        "rewrite_hint": null
-      }
-    }
-    ```
+Prohibited:
 
-    ## Service Boundary
+- humor
+- irony
+- emotional mind-reading
+- unsupported interpretation
+- casual filler
 
-    - Keep UI thin.
-    - Keep provider calls behind a small adapter or service.
-    - Keep prompt construction separate from Streamlit widgets.
-    - Keep data contracts testable without network.
-    - Keep local file paths out of public JSON and screenshots.
-    - Keep frame extraction separate from scene reasoning.
-    - Keep scene reasoning separate from tone rendering.
-    - Keep evaluation separate from generation.
+Judge-friendly cue:
 
-    ## Provider/API Boundary
+- The caption should read like a professional accessibility caption or concise report.
 
-    - Fireworks/Gemma calls require explicit `FIREWORKS_API_KEY`.
-    - Stub/test mode must work without network.
-    - Do not send secrets, private repo content, private docs, or local paths as model context.
-    - Provider outputs are draft until evaluated or shown as generated outputs.
+Failure modes:
 
-    ## Prompt Contracts
+- too playful
+- too vague
+- adds interpretation instead of visible fact
 
-    Prompts should:
+### Sarcastic
 
-    - preserve factual core before style rendering
-    - make uncertainty explicit
-    - avoid invented details
-    - produce judge-friendly JSON
-    - keep humor accessible and non-obscure
-    - return strict JSON when a service expects JSON
-    - avoid internal project jargon in model-facing instructions
+Purpose:
 
-    ## Tests
+- Provide mild dry irony while preserving facts.
 
-    Add or preserve tests appropriate to this gate. Prefer deterministic tests for schemas, service behavior, and public-safe output.
+Required signals:
 
-    Suggested command:
+- restrained sarcasm
+- obvious contrast between mundane facts and dry phrasing
+- no cruelty
+- no hidden references
+- no new facts
 
-    ```bash
-    python -m pytest -k 'caption or tone or style'
-    ```
+Prohibited:
 
-    ### Direct Service Tests
+- insults
+- mean-spirited jokes
+- obscure references
+- dramatic claims not supported by the scene
+- sarcasm that changes what happened
 
-    Add direct tests for the smallest service involved in this gate. Tests should not require network unless the gate explicitly covers real provider integration.
+Judge-friendly cue:
 
-    ### Contract Tests
+- An LLM judge should immediately recognize dry irony without needing cultural or insider context.
 
-    Validate JSON shape, required keys, and failure handling for malformed inputs.
+Failure modes:
 
-    ### Public-Safety Tests
+- sounds merely humorous, not sarcastic
+- becomes hostile
+- adds invented frustration, incompetence, or intent
 
-    Where practical, assert outputs do not include local filesystem paths, secrets, private repo names, or private research terms.
+### Humorous-Tech
 
-    ### README Sync Test/Check
+Purpose:
 
-    Manually inspect README after the gate. The README must not claim future gates are implemented.
+- Provide developer/software-flavored humor while preserving facts.
 
-    ## README Update Requirements
+Required signals:
 
-    Update README.md to reflect this gate's actual completed behavior. Do not document future gates as implemented.
+- accessible tech analogy
+- light developer vocabulary
+- no dependency on deep insider knowledge
+- same factual core as the formal caption
 
-    The README must include current gate status, working commands only, known limitations, and planned gates as future work.
+Allowed examples of style:
 
-    ## Acceptance Criteria
+- bug, deploy, loading, patch, version, queue, script, process, runtime
 
-    - Gate scope is complete.
-    - Tests or verification command pass, or blockers are documented.
-    - README is updated conservatively.
-    - No private or proprietary content is introduced.
-    - The project remains optimized for Track 2 accuracy and tone judging.
-    - The implementation can be explained in one minute to a hackathon judge.
-    - The next gate remains clearly separate.
+Prohibited:
 
-    ## Implementation Steps
+- obscure framework jokes
+- private project references
+- jargon that hides the scene facts
+- claims that the video contains software unless visibly true
 
-    1. Read `SKILL.md`.
-    2. Read `docs/README_GATE_POLICY.md`.
-    3. Read this execution document.
-    4. Inspect the current repo tree.
-    5. Identify the smallest files needed for this gate.
-    6. Add or update tests first when practical.
-    7. Implement only this gate.
-    8. Run the suggested verification command.
-    9. Update README with actual completed behavior only.
-    10. Report changed files, test results, risks, and next gate.
+Judge-friendly cue:
 
-    ## Reviewer Confidence Signal
+- The caption should clearly be tech-flavored even for a non-expert judge.
 
-    A reviewer should be able to see exactly what changed, why it matters for Track 2 judging, how it was verified, and what remains planned.
+Failure modes:
 
-    ## Benchmark / Evidence Artifact
+- too technical to score
+- not funny
+- facts disappear behind analogy
+- tech metaphor becomes a false factual claim
 
-    Each gate should leave behind at least one useful artifact: passing tests, a working command, sample JSON, screenshot-ready UI state, or README instructions.
+### Humorous-Non-Tech
 
-    ## Demo Commands
+Purpose:
 
-    Use the simplest command that proves this gate. If no command exists yet, use `true` and document why.
+- Provide general-audience humor while preserving facts.
 
-    ```bash
-    python -m pytest -k 'caption or tone or style'
-    ```
+Required signals:
 
-    ## Expected Output
+- broadly understandable joke
+- no technical vocabulary required
+- no obscure cultural reference
+- same factual core as the formal caption
 
-    Public-safe project files and/or demo behavior that prove this gate only. Outputs should not include secrets, private repo paths, or private research references.
+Prohibited:
 
-    ## Failure Cases
+- software/developer framing
+- private references
+- sarcasm that overlaps too much with the sarcastic tone
+- jokes that require knowing context outside the video
 
-    - Missing Fireworks key
-    - Missing ffmpeg
-    - Invalid video input
-    - Model output is malformed JSON
-    - Caption invents facts
-    - Tone is ambiguous
-    - README claims future work is done
+Judge-friendly cue:
 
-    ## Stop/Gate Criteria
+- The caption should be clearly funny or playful to a general audience.
 
-    Stop if implementation broadens beyond this gate, weakens public-safe boundaries, removes README synchronization, or claims completion before the behavior works.
+Failure modes:
 
-    ## Suggested Conventional Commit
+- too similar to sarcastic
+- too vague
+- joke replaces factual content
+- depends on external context
 
-    ```text
-    feat(captions): generate four judged tones
-    ```
+## Tone Separation Requirements
+
+The four captions should be distinguishable by a judge without reading labels:
+
+| Tone | Main Difference |
+| --- | --- |
+| formal | neutral/professional |
+| sarcastic | mild dry irony |
+| humorous-tech | tech/developer-flavored joke |
+| humorous-non-tech | general-audience joke |
+
+Do not optimize for cleverness at the expense of factual accuracy. A simple clear joke beats an ambiguous clever joke.
+
+## Service Boundary
+
+- Caption generation consumes the C3 factual scene core.
+- Caption generation does not inspect raw private docs or implementation-pack context.
+- Caption generation does not mutate the factual scene core.
+- Caption generation does not evaluate or repair; C5/C6 handle that later.
+- UI may display captions later, but C4 should remain usable as a service with tests.
+
+## Provider/API Boundary
+
+If using Fireworks/Gemma, send only public-safe scene core fields and the tone rubric. Never send secrets, private docs, local paths, implementation pack contents, or private research material as model context.
+
+Provider output is draft text until C5 evaluates it.
+
+## Prompt Contracts
+
+The caption-generation prompt must:
+
+- require exactly four captions
+- require strict JSON
+- include the same `scene_core_id` in output
+- preserve the factual scene core
+- exclude unsupported inferences
+- preserve uncertainty rather than resolving it
+- make tone labels explicit
+- keep each caption short
+- avoid obscure references
+- avoid emotion, motive, identity, or causality inference unless supported by the factual core
+
+## Tests
+
+Add deterministic tests for:
+
+- exactly four required keys are returned
+- every caption uses the same `scene_core_id`
+- no caption uses C3 `unsupported_inferences`
+- captions do not add facts absent from the fixture scene core
+- formal caption has no joke/sarcasm marker in stub output
+- sarcastic caption is distinguishable from formal and humorous outputs
+- humorous-tech contains accessible tech framing in stub output
+- humorous-non-tech avoids tech framing in stub output
+- malformed provider JSON fails safely
+- public output contains no local paths, secrets, or private research terms
+
+## README Update Requirements
+
+Update README.md to reflect this gate's actual completed behavior. Do not document future gates as implemented.
+
+The README must include current gate status, working commands only, known limitations, and planned gates as future work.
+
+## Acceptance Criteria
+
+- Four captions can be produced from one factual scene core in stub mode.
+- Captions preserve the same factual core.
+- All four tones are clearly distinguishable.
+- Unsupported inferences do not become caption facts.
+- JSON output is usable by C5 evaluator.
+
+## Implementation Steps
+
+1. Read `SKILL.md`.
+2. Read `docs/README_GATE_POLICY.md`.
+3. Read this execution document.
+4. Inspect C3 scene core contract.
+5. Define or update the caption contract.
+6. Add deterministic stub tests first where practical.
+7. Implement only C4 generation behavior.
+8. Run the suggested verification command.
+9. Update README with actual completed behavior only.
+10. Report changed files, test results, risks, and next gate.
+
+## Reviewer Confidence Signal
+
+A reviewer should be able to see exactly how one factual scene core produced four style-specific captions, how factual stability was preserved, how tone separation was tested, and what remains deferred to C5 evaluator or later.
+
+## Benchmark / Evidence Artifact
+
+This gate should leave behind at least one concrete artifact:
+
+- passing four-tone caption contract tests
+- a sample C3 scene core fixture
+- a sample four-caption JSON fixture
+- a tone-separation test fixture
+- a documented blocker with the exact provider, schema, or prompt issue
+
+## Demo Commands
+
+```bash
+python -m pytest -k "caption or tone or style"
+```
+
+## Expected Output
+
+A public-safe four-caption JSON object that is ready for C5 evaluator scoring.
+
+## Failure Cases
+
+- Captions invent details
+- Formal caption includes humor
+- Sarcastic caption becomes hostile or ambiguous
+- Humorous-tech caption depends on obscure jargon
+- Humorous-non-tech caption overlaps too much with sarcastic
+- Tone labels are treated as emotion or intent inference
+- Unsupported inferences leak into captions
+- Provider output is malformed JSON
+- README claims evaluator or repair exists before C5/C6
+
+## Stop/Gate Criteria
+
+Stop if tone rendering changes the factual claim set, uses unsupported inferences, weakens public-safe boundaries, removes README synchronization, or starts evaluator/repair work.
+
+## Suggested Conventional Commit
+
+```text
+feat(captions): generate four judged tones
+```
