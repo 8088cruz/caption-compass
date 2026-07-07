@@ -24,7 +24,7 @@ one factual scene core -> four tonal bearings -> accuracy/tone evaluation -> opt
 - Use Gemma/Fireworks meaningfully where provider behavior is required.
 - Prefer one-day runnable implementation over clever architecture.
 - Keep the repository MIT-compliant.
-- Do not expose private Corpus, Signal, CGS, KGL, or Arachne internals.
+- Do not expose private research systems, internal project names, private repo paths, unpublished architecture, or long-term product strategy.
 - Do not quote copyrighted source material.
 - Do not add unnecessary features.
 - Follow gates C0-C8.

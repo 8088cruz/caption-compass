@@ -11,7 +11,7 @@
     ## Strict Non-Scope
 
     - Do not expose private research material, private repo paths, unreleased architecture, or long-term strategy.
-- Do not mention private Corpus, Signal, CGS, KGL, or Arachne internals in public repo content.
+- Do not mention private research systems, internal project names, private repo paths, unpublished architecture, or long-term product strategy in public repo content.
 - Do not quote copyrighted source material.
 - Do not add features outside the current gate.
 - Do not claim the project is complete before C8.
