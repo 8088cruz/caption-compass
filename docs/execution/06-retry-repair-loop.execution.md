@@ -1,262 +1,304 @@
-# Execution: C6 - Retry/repair loop
+# Execution: C6 - Retry/Repair Loop
 
-    ## Goal
+## Goal
 
-    Implement one bounded repair pass for captions that fail accuracy, tone, or clarity thresholds.
+Implement one bounded repair pass for captions that fail C5 factual accuracy, tone match, or clarity thresholds.
 
-    ## Why This Exists
+## Why This Exists
 
-    Caption Compass is being built for AMD Developer Hackathon: ACT II Track 2. The judging surface is factual accuracy and tone match across four required styles. This gate keeps implementation focused on the smallest useful slice that improves judge-readiness without leaking private research or overbuilding.
+C6 turns C5 evaluation into visible product behavior while staying feasible for a one-day solo build:
 
-    ## Source-of-Truth References
+```text
+failed caption + factual scene core + evaluator issue codes -> one repaired caption -> before/after score artifact
+```
 
-    - Public repository: `8088cruz/caption-compass`
-    - Repository URL: https://github.com/8088cruz/caption-compass
-    - Track 2 target: Video Captioning
-    - Product thesis: one factual scene core, four tonal bearings, built-in accuracy and tone checks
-    - Required tones: formal, sarcastic, humorous-tech, humorous-non-tech
-    - Preferred stack: Python, Streamlit, ffmpeg, Fireworks AI API, Gemma when available, Docker
-    - README gate policy: `docs/README_GATE_POLICY.md`
-    - Current gate prompt: `docs/implementation-prompts/gate-c6.prompt.md`
-    - Current todo prompt: `docs/implementation-prompts/todos/c6-t01-retry-repair-loop.prompt.md`
+The repair loop should demonstrate quality control, not become an unbounded agent system.
 
-    ## Scope
+## Source-of-Truth References
 
-    - Retry only failed captions.
-- Use evaluator feedback and factual scene core to repair outputs.
-- Bound retries to avoid runaway model calls.
-- Expose before/after scoring for demo clarity.
+- `SKILL.md`
+- `docs/README_GATE_POLICY.md`
+- `docs/implementation-prompts/gate-c6.prompt.md`
+- `docs/implementation-prompts/todos/c6-t01-retry-repair-loop.prompt.md`
+- C3 factual scene core from `docs/execution/03-factual-scene-core.execution.md`
+- C4 four-tone caption contract from `docs/execution/04-four-tone-caption-generation.execution.md`
+- C5 evaluator contract from `docs/execution/05-accuracy-tone-evaluator.execution.md`
 
-    ## Out of Scope
+## Scope
 
-    - Multi-agent loops
+- Retry only captions marked `repair_eligible: true` by C5.
+- Use C5 issue codes and rewrite hints to repair failed captions.
+- Preserve the same `scene_core_id`.
+- Preserve factual content from the C3 scene core.
+- Exclude C3 `unsupported_inferences` from repaired caption facts.
+- Bound repair to exactly one pass per failed caption.
+- Re-evaluate repaired captions.
+- Expose before/after captions and before/after scores for demo clarity.
+
+## Out of Scope
+
+- Multi-agent loops
 - Unbounded self-improvement
+- More than one repair attempt
 - Automatic fine-tuning
 - Complex caching
+- Human preference ranking UI
+- Repairing malformed scene cores
 
-    ## Prerequisites
+## Prerequisites
 
-    - Complete prior gates in order unless explicitly running C0.
-    - Keep repository public-safe and MIT-compatible.
-    - Keep future work under planned/roadmap language only.
-    - Use stub or deterministic behavior when real Fireworks credentials are unavailable.
-    - Read `SKILL.md` before implementing.
-    - Read `docs/README_GATE_POLICY.md` before editing README.
+- C3 factual scene core contract exists.
+- C4 four-caption output exists.
+- C5 evaluator returns issue codes, thresholds, rewrite hints, and `repair_eligible`.
+- Provider adapter or deterministic stub exists.
+- README gate policy has been read before README edits.
 
-    ## Files/Packages Likely Touched
+## Files/Packages Likely Touched
 
-    ```text
-    caption service
-evaluator service
-repair prompt templates
-tests
-    ```
+```text
+app/contracts.py
+app/repair.py
+app/evaluator.py
+app/captions.py
+app/providers.py
+app/prompts/
+tests/test_repair.py
+README.md
+```
 
-    ## Commands or UI Actions Added
+## Commands or UI Actions Added
 
-    Gate-specific commands or UI controls should be minimal. Prefer a working local command, test, or Streamlit interaction over broad architecture.
+Suggested verification command:
 
-    Suggested verification command:
+```bash
+python -m pytest -k "repair or retry or evaluator or caption"
+```
 
-    ```bash
-    python -m pytest -k 'repair or retry or evaluator or caption'
-    ```
+## Data Contracts
 
-    ## Data Contracts
+### Repair Result
 
-    The final project should converge on these public JSON contracts. This gate should implement only the relevant subset:
+C6 should implement this contract or a clearly equivalent typed model:
 
-    ```json
+```json
+{
+  "scene_core_id": "stable-scene-core-id",
+  "source_video_id": "stable-video-id",
+  "max_repair_attempts": 1,
+  "repair_thresholds": {
+    "factual_accuracy_min": 0.85,
+    "tone_match_min": 0.75,
+    "clarity_min": 0.70
+  },
+  "repair_history": [
     {
-      "scene_core": {
-        "summary": "factual, style-free scene description",
-        "observed_entities": [],
-        "observed_actions": [],
-        "setting": null,
-        "visible_text": [],
-        "uncertainties": []
+      "caption_key": "sarcastic",
+      "attempt": 1,
+      "repair_reason_codes": ["tone_mismatch"],
+      "rewrite_hint_used": "Keep the same facts but add mild dry irony without adding new claims.",
+      "before": {
+        "text": "Original failed caption.",
+        "scores": {
+          "factual_accuracy": 0.90,
+          "tone_match": 0.55,
+          "clarity": 0.82
+        },
+        "issues": ["tone_mismatch"]
       },
-      "captions": {
-        "formal": "...",
-        "sarcastic": "...",
-        "humorous_tech": "...",
-        "humorous_non_tech": "..."
+      "after": {
+        "text": "Repaired caption.",
+        "scores": {
+          "factual_accuracy": 0.90,
+          "tone_match": 0.82,
+          "clarity": 0.86
+        },
+        "issues": []
       },
-      "evaluation": {
-        "formal": {"factual_accuracy": 1, "tone_match": 1, "clarity": 1, "issues": []}
-      }
+      "accepted": true
     }
-    ```
+  ],
+  "final_captions": {
+    "formal": "unchanged passing caption",
+    "sarcastic": "repaired caption",
+    "humorous_tech": "unchanged passing caption",
+    "humorous_non_tech": "unchanged passing caption"
+  }
+}
+```
 
-    This gate should implement only the pieces required by its scope.
+### Before/After Score Artifact
 
-    ### Scene Core Contract
+The demo should be able to show:
 
-    The scene core is style-free. It should contain observed or cautiously inferred facts only:
+| Field | Meaning |
+| --- | --- |
+| `caption_key` | Which tone was repaired. |
+| `attempt` | Always `1` unless scope changes later. |
+| `repair_reason_codes` | C5 issue codes that triggered repair. |
+| `before.text` | Original failed caption. |
+| `before.scores` | C5 scores before repair. |
+| `after.text` | Repaired caption. |
+| `after.scores` | C5 scores after repair. |
+| `accepted` | Whether repaired caption meets thresholds and does not introduce worse issues. |
 
-    ```json
-    {
-      "summary": "short factual description",
-      "observed_entities": ["person", "object"],
-      "observed_actions": ["walks", "points"],
-      "setting": "visible setting or null",
-      "visible_text": [],
-      "audio_notes": [],
-      "uncertainties": ["what is unclear"],
-      "frame_evidence": []
-    }
-    ```
+## Repair Thresholds
 
-    ### Caption Contract
+Use C5 thresholds by default:
 
-    Captions must preserve the same factual core while changing only presentation style:
+| Metric | Default threshold |
+| --- | ---: |
+| `factual_accuracy` | `0.85` |
+| `tone_match` | `0.75` |
+| `clarity` | `0.70` |
 
-    ```json
-    {
-      "formal": "neutral professional caption",
-      "sarcastic": "dry but fact-preserving caption",
-      "humorous_tech": "developer/tech humor caption",
-      "humorous_non_tech": "general audience humorous caption"
-    }
-    ```
+Repair is triggered when:
 
-    ### Evaluation Contract
+- C5 sets `repair_eligible: true`, and
+- one or more scores are below threshold, or
+- one or more repairable issue codes are present.
 
-    Evaluator output must be judge-legible:
+Repair should not run when:
 
-    ```json
-    {
-      "caption_key": {
-        "factual_accuracy": 1,
-        "tone_match": 1,
-        "clarity": 1,
-        "issues": [],
-        "rewrite_hint": null
-      }
-    }
-    ```
+- `scene_core_mismatch` is present
+- `malformed_output` prevents reliable parsing
+- `unsafe_or_private_reference` requires hard failure instead of rewrite
+- the factual scene core itself is missing or malformed
+- the caption already passes thresholds
 
-    ## Service Boundary
+## Repairable Issue Codes
 
-    - Keep UI thin.
-    - Keep provider calls behind a small adapter or service.
-    - Keep prompt construction separate from Streamlit widgets.
-    - Keep data contracts testable without network.
-    - Keep local file paths out of public JSON and screenshots.
-    - Keep frame extraction separate from scene reasoning.
-    - Keep scene reasoning separate from tone rendering.
-    - Keep evaluation separate from generation.
+Repair may target:
 
-    ## Provider/API Boundary
+- `invented_fact`
+- `missing_core_fact`
+- `unsupported_inference_used`
+- `uncertainty_overclaimed`
+- `tone_mismatch`
+- `tone_bleed`
+- `unclear_joke`
 
-    - Fireworks/Gemma calls require explicit `FIREWORKS_API_KEY`.
-    - Stub/test mode must work without network.
-    - Do not send secrets, private repo content, private docs, or local paths as model context.
-    - Provider outputs are draft until evaluated or shown as generated outputs.
+Repair must not hide or bypass:
 
-    ## Prompt Contracts
+- `scene_core_mismatch`
+- `malformed_output`
+- `unsafe_or_private_reference`
 
-    Prompts should:
+## Service Boundary
 
-    - preserve factual core before style rendering
-    - make uncertainty explicit
-    - avoid invented details
-    - produce judge-friendly JSON
-    - keep humor accessible and non-obscure
-    - return strict JSON when a service expects JSON
-    - avoid internal project jargon in model-facing instructions
+- Repair consumes C3 factual scene core, C4 captions, and C5 evaluation.
+- Repair does not mutate the factual scene core.
+- Repair does not invent new facts.
+- Repair does not run more than once per failed caption.
+- Repair does not implement UI; C7 displays repair results later.
 
-    ## Tests
+## Provider/API Boundary
 
-    Add or preserve tests appropriate to this gate. Prefer deterministic tests for schemas, service behavior, and public-safe output.
+If using Fireworks/Gemma, send only the failed caption, target tone, factual scene core, issue codes, and rewrite hint. Never send secrets, private docs, local paths, implementation pack contents, or private research material as model context.
 
-    Suggested command:
+Provider output is still draft text until re-evaluated.
 
-    ```bash
-    python -m pytest -k 'repair or retry or evaluator or caption'
-    ```
+## Prompt Contracts
 
-    ### Direct Service Tests
+The repair prompt must:
 
-    Add direct tests for the smallest service involved in this gate. Tests should not require network unless the gate explicitly covers real provider integration.
+- require strict JSON or a single repaired caption field
+- preserve the same `scene_core_id`
+- preserve factual scene core
+- target only the supplied issue codes
+- use the supplied rewrite hint
+- avoid new facts
+- exclude unsupported inferences
+- preserve uncertainty
+- keep tone judge-friendly
+- avoid private references and internal project jargon
 
-    ### Contract Tests
+## Tests
 
-    Validate JSON shape, required keys, and failure handling for malformed inputs.
+Add deterministic tests for:
 
-    ### Public-Safety Tests
+- passing captions are not repaired
+- failed repair-eligible captions are repaired exactly once
+- `max_repair_attempts` is enforced
+- repaired caption preserves `scene_core_id`
+- repair history includes before/after text and scores
+- repaired caption is re-evaluated
+- accepted repair meets thresholds
+- rejected repair does not replace the original unless policy explicitly allows it
+- non-repairable issue codes stop repair
+- repair does not use C3 `unsupported_inferences`
+- public output contains no local paths, secrets, or private research terms
 
-    Where practical, assert outputs do not include local filesystem paths, secrets, private repo names, or private research terms.
+## README Update Requirements
 
-    ### README Sync Test/Check
+Update README.md to reflect this gate's actual completed behavior. Do not document future gates as implemented.
 
-    Manually inspect README after the gate. The README must not claim future gates are implemented.
+The README must include current gate status, working commands only, known limitations, and planned gates as future work. If implemented, describe repair as one bounded repair pass, not a self-improving or autonomous loop.
 
-    ## README Update Requirements
+## Acceptance Criteria
 
-    Update README.md to reflect this gate's actual completed behavior. Do not document future gates as implemented.
+- Repair loop is bounded to one pass.
+- Only repair-eligible captions are retried.
+- Before/after scores are visible in structured output.
+- Repaired captions are re-evaluated.
+- Repair never changes the factual scene core.
+- README does not overclaim autonomous improvement.
 
-    The README must include current gate status, working commands only, known limitations, and planned gates as future work.
+## Implementation Steps
 
-    ## Acceptance Criteria
+1. Read `SKILL.md`.
+2. Read `docs/README_GATE_POLICY.md`.
+3. Read this execution document.
+4. Inspect C3, C4, and C5 contracts.
+5. Define or update repair history contract.
+6. Add deterministic repair fixtures.
+7. Implement only C6 repair behavior.
+8. Run the suggested verification command.
+9. Update README with actual completed behavior only.
+10. Report changed files, test results, risks, and next gate.
 
-    - Gate scope is complete.
-    - Tests or verification command pass, or blockers are documented.
-    - README is updated conservatively.
-    - No private or proprietary content is introduced.
-    - The project remains optimized for Track 2 accuracy and tone judging.
-    - The implementation can be explained in one minute to a hackathon judge.
-    - The next gate remains clearly separate.
+## Reviewer Confidence Signal
 
-    ## Implementation Steps
+A reviewer should be able to see which captions failed, why they failed, which repair hint was used, what changed, whether scores improved, and whether the repaired caption was accepted without any hidden loop.
 
-    1. Read `SKILL.md`.
-    2. Read `docs/README_GATE_POLICY.md`.
-    3. Read this execution document.
-    4. Inspect the current repo tree.
-    5. Identify the smallest files needed for this gate.
-    6. Add or update tests first when practical.
-    7. Implement only this gate.
-    8. Run the suggested verification command.
-    9. Update README with actual completed behavior only.
-    10. Report changed files, test results, risks, and next gate.
+## Benchmark / Evidence Artifact
 
-    ## Reviewer Confidence Signal
+This gate should leave behind at least one concrete artifact:
 
-    A reviewer should be able to see exactly what changed, why it matters for Track 2 judging, how it was verified, and what remains planned.
+- passing repair-loop tests
+- a sample repair history JSON fixture
+- a before/after score fixture
+- a rejected-repair fixture
+- a no-repair-needed fixture
+- a README note describing the one-pass repair limitation
+- a documented blocker with exact provider, schema, or fixture issue
 
-    ## Benchmark / Evidence Artifact
+## Demo Commands
 
-    Each gate should leave behind at least one useful artifact: passing tests, a working command, sample JSON, screenshot-ready UI state, or README instructions.
+```bash
+python -m pytest -k "repair or retry or evaluator or caption"
+```
 
-    ## Demo Commands
+## Expected Output
 
-    Use the simplest command that proves this gate. If no command exists yet, use `true` and document why.
+A public-safe repair result JSON object that can drive C7 UI display.
 
-    ```bash
-    python -m pytest -k 'repair or retry or evaluator or caption'
-    ```
+## Failure Cases
 
-    ## Expected Output
+- Repair invents new details
+- Repair ignores evaluator issue codes
+- Repair loops more than once
+- Repair changes scene core
+- Repair uses unsupported inferences
+- Repair worsens factual accuracy
+- Re-evaluation is skipped
+- README claims autonomous self-improvement
 
-    Public-safe project files and/or demo behavior that prove this gate only. Outputs should not include secrets, private repo paths, or private research references.
+## Stop/Gate Criteria
 
-    ## Failure Cases
+Stop if repair cannot be bounded, if before/after artifacts are absent, if scene core mutates, if repair starts handling UI, or if the loop becomes multi-agent/unbounded.
 
-    - Missing Fireworks key
-    - Missing ffmpeg
-    - Invalid video input
-    - Model output is malformed JSON
-    - Caption invents facts
-    - Tone is ambiguous
-    - README claims future work is done
+## Suggested Conventional Commit
 
-    ## Stop/Gate Criteria
-
-    Stop if implementation broadens beyond this gate, weakens public-safe boundaries, removes README synchronization, or claims completion before the behavior works.
-
-    ## Suggested Conventional Commit
-
-    ```text
-    feat(captions): add bounded repair loop
-    ```
+```text
+feat(captions): add bounded repair loop
+```

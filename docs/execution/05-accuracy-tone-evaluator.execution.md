@@ -1,262 +1,265 @@
-# Execution: C5 - Accuracy/tone evaluator
+# Execution: C5 - Accuracy/Tone Evaluator
 
-    ## Goal
+## Goal
 
-    Add a judge-like evaluator that scores factual accuracy, tone match, and clarity for each caption.
+Add a judge-like evaluator that scores each caption for factual accuracy, tone match, and clarity, then returns issue codes and actionable rewrite hints.
 
-    ## Why This Exists
+## Why This Exists
 
-    Caption Compass is being built for AMD Developer Hackathon: ACT II Track 2. The judging surface is factual accuracy and tone match across four required styles. This gate keeps implementation focused on the smallest useful slice that improves judge-readiness without leaking private research or overbuilding.
+Track 2 is judged on accuracy and tone. C5 makes the project more than a four-caption generator by showing the same kind of checks a judge will care about:
 
-    ## Source-of-Truth References
+```text
+factual scene core + four captions -> score report + issue taxonomy + rewrite hints
+```
 
-    - Public repository: `8088cruz/caption-compass`
-    - Repository URL: https://github.com/8088cruz/caption-compass
-    - Track 2 target: Video Captioning
-    - Product thesis: one factual scene core, four tonal bearings, built-in accuracy and tone checks
-    - Required tones: formal, sarcastic, humorous-tech, humorous-non-tech
-    - Preferred stack: Python, Streamlit, ffmpeg, Fireworks AI API, Gemma when available, Docker
-    - README gate policy: `docs/README_GATE_POLICY.md`
-    - Current gate prompt: `docs/implementation-prompts/gate-c5.prompt.md`
-    - Current todo prompt: `docs/implementation-prompts/todos/c5-t01-accuracy-tone-evaluator.prompt.md`
+The evaluator should be visible enough to impress judges, but honest enough not to claim it proves truth.
 
-    ## Scope
+## Source-of-Truth References
 
-    - Score each caption for factual accuracy, tone match, and clarity.
-- Flag invented details, missing facts, tone bleed, and unclear jokes.
+- `SKILL.md`
+- `docs/README_GATE_POLICY.md`
+- `docs/implementation-prompts/gate-c5.prompt.md`
+- `docs/implementation-prompts/todos/c5-t01-accuracy-tone-evaluator.prompt.md`
+- C3 factual scene core from `docs/execution/03-factual-scene-core.execution.md`
+- C4 four-tone caption contract from `docs/execution/04-four-tone-caption-generation.execution.md`
+
+## Scope
+
+- Score each caption for factual accuracy, tone match, and clarity.
+- Compare each caption against the C3 factual scene core.
+- Verify that all captions preserve the same `scene_core_id`.
+- Flag invented facts, missing core facts, unsupported inference use, tone mismatch, tone bleed, unclear jokes, malformed output, and unsafe/private-reference leakage.
 - Return actionable rewrite hints.
+- Mark repair eligibility for C6.
 - Work in stub/test mode without network.
 
-    ## Out of Scope
+## Out of Scope
 
-    - Automated repair
+- Automated repair
+- Rewriting captions
 - Leaderboard claims
 - Human preference UI
 - Model fine-tuning
+- Claims that evaluator scores prove objective truth
 
-    ## Prerequisites
+## Prerequisites
 
-    - Complete prior gates in order unless explicitly running C0.
-    - Keep repository public-safe and MIT-compatible.
-    - Keep future work under planned/roadmap language only.
-    - Use stub or deterministic behavior when real Fireworks credentials are unavailable.
-    - Read `SKILL.md` before implementing.
-    - Read `docs/README_GATE_POLICY.md` before editing README.
+- C3 factual scene core contract exists.
+- C4 four-tone caption contract exists.
+- Provider adapter or deterministic stub exists.
+- README gate policy has been read before README edits.
 
-    ## Files/Packages Likely Touched
+## Files/Packages Likely Touched
 
-    ```text
-    evaluator schema
-evaluator prompt templates
-scoring service
-tests
-    ```
+```text
+app/contracts.py
+app/evaluator.py
+app/providers.py
+app/prompts/
+tests/test_evaluator.py
+README.md
+```
 
-    ## Commands or UI Actions Added
+## Commands or UI Actions Added
 
-    Gate-specific commands or UI controls should be minimal. Prefer a working local command, test, or Streamlit interaction over broad architecture.
+Suggested verification command:
 
-    Suggested verification command:
+```bash
+python -m pytest -k "evaluator or scoring or accuracy or tone"
+```
 
-    ```bash
-    python -m pytest -k 'evaluator or scoring or accuracy or tone'
-    ```
+## Data Contracts
 
-    ## Data Contracts
+### Evaluation Result
 
-    The final project should converge on these public JSON contracts. This gate should implement only the relevant subset:
+C5 should implement this contract or a clearly equivalent typed model:
 
-    ```json
-    {
-      "scene_core": {
-        "summary": "factual, style-free scene description",
-        "observed_entities": [],
-        "observed_actions": [],
-        "setting": null,
-        "visible_text": [],
-        "uncertainties": []
-      },
-      "captions": {
-        "formal": "...",
-        "sarcastic": "...",
-        "humorous_tech": "...",
-        "humorous_non_tech": "..."
-      },
-      "evaluation": {
-        "formal": {"factual_accuracy": 1, "tone_match": 1, "clarity": 1, "issues": []}
-      }
+```json
+{
+  "scene_core_id": "stable-scene-core-id",
+  "source_video_id": "stable-video-id",
+  "thresholds": {
+    "factual_accuracy_min": 0.85,
+    "tone_match_min": 0.75,
+    "clarity_min": 0.70
+  },
+  "evaluation": {
+    "formal": {
+      "factual_accuracy": 0.95,
+      "tone_match": 0.92,
+      "clarity": 0.96,
+      "passed": true,
+      "repair_eligible": false,
+      "issues": [],
+      "rewrite_hint": null
+    },
+    "sarcastic": {
+      "factual_accuracy": 0.90,
+      "tone_match": 0.55,
+      "clarity": 0.82,
+      "passed": false,
+      "repair_eligible": true,
+      "issues": [
+        {
+          "code": "tone_mismatch",
+          "severity": "medium",
+          "detail": "Caption is playful but not recognizably sarcastic."
+        }
+      ],
+      "rewrite_hint": "Keep the same facts but add mild dry irony without adding new claims."
     }
-    ```
+  },
+  "overall": {
+    "passed": false,
+    "repair_recommended": true,
+    "failed_caption_keys": ["sarcastic"]
+  }
+}
+```
 
-    This gate should implement only the pieces required by its scope.
+### Score Scale
 
-    ### Scene Core Contract
+Scores are floats from `0.0` to `1.0`.
 
-    The scene core is style-free. It should contain observed or cautiously inferred facts only:
+Recommended default thresholds:
 
-    ```json
-    {
-      "summary": "short factual description",
-      "observed_entities": ["person", "object"],
-      "observed_actions": ["walks", "points"],
-      "setting": "visible setting or null",
-      "visible_text": [],
-      "audio_notes": [],
-      "uncertainties": ["what is unclear"],
-      "frame_evidence": []
-    }
-    ```
+| Metric | Default threshold | Why |
+| --- | ---: | --- |
+| `factual_accuracy` | `0.85` | Accuracy is the highest-priority judging surface. |
+| `tone_match` | `0.75` | Tones must be obvious but not overfit. |
+| `clarity` | `0.70` | Captions must be easy for an LLM judge to score. |
 
-    ### Caption Contract
+These thresholds should be constants/config, not magic numbers scattered across code.
 
-    Captions must preserve the same factual core while changing only presentation style:
+## Issue Taxonomy
 
-    ```json
-    {
-      "formal": "neutral professional caption",
-      "sarcastic": "dry but fact-preserving caption",
-      "humorous_tech": "developer/tech humor caption",
-      "humorous_non_tech": "general audience humorous caption"
-    }
-    ```
+Use these issue codes exactly unless a later gate explicitly revises the taxonomy:
 
-    ### Evaluation Contract
+| Code | Meaning | Repair eligible |
+| --- | --- | --- |
+| `invented_fact` | Caption adds a fact absent from the factual scene core. | yes, if removable |
+| `missing_core_fact` | Caption omits a key fact needed to preserve the scene core. | yes |
+| `unsupported_inference_used` | Caption uses a C3 unsupported inference as if true. | yes, if removable |
+| `uncertainty_overclaimed` | Caption turns uncertainty into certainty. | yes |
+| `tone_mismatch` | Caption does not match its required tone. | yes |
+| `tone_bleed` | Caption overlaps too much with another tone. | yes |
+| `unclear_joke` | Humor is ambiguous, obscure, or hard to score. | yes |
+| `unsafe_or_private_reference` | Output contains private/system/internal references or unsafe content. | no until removed by guardrail |
+| `malformed_output` | Provider output is invalid JSON or missing required fields. | no; regenerate or fail safely |
+| `scene_core_mismatch` | Caption output references a different `scene_core_id`. | no; fail contract |
 
-    Evaluator output must be judge-legible:
+## Service Boundary
 
-    ```json
-    {
-      "caption_key": {
-        "factual_accuracy": 1,
-        "tone_match": 1,
-        "clarity": 1,
-        "issues": [],
-        "rewrite_hint": null
-      }
-    }
-    ```
+- Evaluation consumes the C3 factual scene core and C4 captions.
+- Evaluation does not mutate captions.
+- Evaluation does not repair captions; C6 handles repair.
+- Evaluation does not inspect raw private docs or implementation-pack content.
+- UI may display evaluation later, but C5 should be usable as a service with tests.
 
-    ## Service Boundary
+## Provider/API Boundary
 
-    - Keep UI thin.
-    - Keep provider calls behind a small adapter or service.
-    - Keep prompt construction separate from Streamlit widgets.
-    - Keep data contracts testable without network.
-    - Keep local file paths out of public JSON and screenshots.
-    - Keep frame extraction separate from scene reasoning.
-    - Keep scene reasoning separate from tone rendering.
-    - Keep evaluation separate from generation.
+If using Fireworks/Gemma, send only public-safe factual scene core, captions, tone labels, and evaluator instructions. Never send secrets, private docs, local paths, implementation pack contents, or private research material as model context.
 
-    ## Provider/API Boundary
+Evaluator output must be described as model-assisted or heuristic. Do not claim it proves correctness.
 
-    - Fireworks/Gemma calls require explicit `FIREWORKS_API_KEY`.
-    - Stub/test mode must work without network.
-    - Do not send secrets, private repo content, private docs, or local paths as model context.
-    - Provider outputs are draft until evaluated or shown as generated outputs.
+## Prompt Contracts
 
-    ## Prompt Contracts
+The evaluator prompt must:
 
-    Prompts should:
+- require strict JSON
+- compare each caption against the factual scene core
+- score factual accuracy, tone match, and clarity
+- use the exact issue taxonomy
+- include concise issue details
+- include actionable rewrite hints only when useful
+- mark `repair_eligible`
+- reject mismatched `scene_core_id`
+- avoid hidden or private project context
 
-    - preserve factual core before style rendering
-    - make uncertainty explicit
-    - avoid invented details
-    - produce judge-friendly JSON
-    - keep humor accessible and non-obscure
-    - return strict JSON when a service expects JSON
-    - avoid internal project jargon in model-facing instructions
+## Tests
 
-    ## Tests
+Add deterministic tests for:
 
-    Add or preserve tests appropriate to this gate. Prefer deterministic tests for schemas, service behavior, and public-safe output.
+- passing fixture returns `passed: true`
+- invented fact fixture returns `invented_fact`
+- unsupported inference fixture returns `unsupported_inference_used`
+- uncertainty overclaim fixture returns `uncertainty_overclaimed`
+- wrong tone fixture returns `tone_mismatch`
+- tone overlap fixture returns `tone_bleed`
+- obscure joke fixture returns `unclear_joke`
+- mismatched `scene_core_id` returns `scene_core_mismatch`
+- malformed provider JSON fails safely
+- scores are bounded from `0.0` to `1.0`
+- public output contains no local paths, secrets, or private research terms
 
-    Suggested command:
+## README Update Requirements
 
-    ```bash
-    python -m pytest -k 'evaluator or scoring or accuracy or tone'
-    ```
+Update README.md to reflect this gate's actual completed behavior. Do not document future gates as implemented.
 
-    ### Direct Service Tests
+The README must include current gate status, working commands only, known limitations, and planned gates as future work. If implemented, describe evaluator output as model-assisted or heuristic, not proof.
 
-    Add direct tests for the smallest service involved in this gate. Tests should not require network unless the gate explicitly covers real provider integration.
+## Acceptance Criteria
 
-    ### Contract Tests
+- Evaluator returns judge-readable scores and issue codes.
+- Failed captions include actionable rewrite hints where repair is possible.
+- Repair eligibility is explicit for C6.
+- Same `scene_core_id` is enforced.
+- README does not overclaim evaluator correctness.
 
-    Validate JSON shape, required keys, and failure handling for malformed inputs.
+## Implementation Steps
 
-    ### Public-Safety Tests
+1. Read `SKILL.md`.
+2. Read `docs/README_GATE_POLICY.md`.
+3. Read this execution document.
+4. Inspect C3 and C4 contracts.
+5. Define or update evaluator contract.
+6. Add deterministic issue-taxonomy fixtures.
+7. Implement only C5 evaluation behavior.
+8. Run the suggested verification command.
+9. Update README with actual completed behavior only.
+10. Report changed files, test results, risks, and next gate.
 
-    Where practical, assert outputs do not include local filesystem paths, secrets, private repo names, or private research terms.
+## Reviewer Confidence Signal
 
-    ### README Sync Test/Check
+A reviewer should be able to see exactly how each caption was scored, why any caption failed, which issue codes were assigned, what repair hint was produced, and what remains deferred to C6 repair.
 
-    Manually inspect README after the gate. The README must not claim future gates are implemented.
+## Benchmark / Evidence Artifact
 
-    ## README Update Requirements
+This gate should leave behind at least one concrete artifact:
 
-    Update README.md to reflect this gate's actual completed behavior. Do not document future gates as implemented.
+- passing evaluator contract tests
+- a sample evaluator JSON fixture
+- an issue-taxonomy fixture set
+- a malformed-provider-output failure fixture
+- a README note describing evaluator limitations
+- a documented blocker with exact provider, schema, or fixture issue
 
-    The README must include current gate status, working commands only, known limitations, and planned gates as future work.
+## Demo Commands
 
-    ## Acceptance Criteria
+```bash
+python -m pytest -k "evaluator or scoring or accuracy or tone"
+```
 
-    - Gate scope is complete.
-    - Tests or verification command pass, or blockers are documented.
-    - README is updated conservatively.
-    - No private or proprietary content is introduced.
-    - The project remains optimized for Track 2 accuracy and tone judging.
-    - The implementation can be explained in one minute to a hackathon judge.
-    - The next gate remains clearly separate.
+## Expected Output
 
-    ## Implementation Steps
+A public-safe evaluation JSON object that can drive C6 repair and C7 UI display.
 
-    1. Read `SKILL.md`.
-    2. Read `docs/README_GATE_POLICY.md`.
-    3. Read this execution document.
-    4. Inspect the current repo tree.
-    5. Identify the smallest files needed for this gate.
-    6. Add or update tests first when practical.
-    7. Implement only this gate.
-    8. Run the suggested verification command.
-    9. Update README with actual completed behavior only.
-    10. Report changed files, test results, risks, and next gate.
+## Failure Cases
 
-    ## Reviewer Confidence Signal
+- Evaluator accepts invented facts
+- Evaluator misses unsupported inference use
+- Evaluator confuses tone categories
+- Evaluator gives vague rewrite hints
+- Evaluator output is malformed JSON
+- Evaluator claims proof instead of score
+- README claims repair exists before C6
 
-    A reviewer should be able to see exactly what changed, why it matters for Track 2 judging, how it was verified, and what remains planned.
+## Stop/Gate Criteria
 
-    ## Benchmark / Evidence Artifact
+Stop if evaluator cannot explain why a caption failed, if issue codes are not stable, if repair is implemented inside C5, or if evaluator claims objective truth.
 
-    Each gate should leave behind at least one useful artifact: passing tests, a working command, sample JSON, screenshot-ready UI state, or README instructions.
+## Suggested Conventional Commit
 
-    ## Demo Commands
-
-    Use the simplest command that proves this gate. If no command exists yet, use `true` and document why.
-
-    ```bash
-    python -m pytest -k 'evaluator or scoring or accuracy or tone'
-    ```
-
-    ## Expected Output
-
-    Public-safe project files and/or demo behavior that prove this gate only. Outputs should not include secrets, private repo paths, or private research references.
-
-    ## Failure Cases
-
-    - Missing Fireworks key
-    - Missing ffmpeg
-    - Invalid video input
-    - Model output is malformed JSON
-    - Caption invents facts
-    - Tone is ambiguous
-    - README claims future work is done
-
-    ## Stop/Gate Criteria
-
-    Stop if implementation broadens beyond this gate, weakens public-safe boundaries, removes README synchronization, or claims completion before the behavior works.
-
-    ## Suggested Conventional Commit
-
-    ```text
-    feat(eval): score caption accuracy and tone
-    ```
+```text
+feat(eval): score caption accuracy and tone
+```
