@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "caption-compass"
+version = "0.1.0"
+description = "Minimal scaffold for a public Track 2 video captioning project."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = []
+
+[project.scripts]
+caption-compass = "caption_compass.scaffold:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3,<9.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "caption_compass",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "c1: C1 scaffold tests",
+]
