@@ -1,262 +1,331 @@
-# Execution: C7 - Demo UI and golden path
+# Execution: C7 - Judge-Visible Trace UI
 
-    ## Goal
+## Goal
 
-    Build a simple Streamlit golden path that shows upload, factual core, four captions, evaluator scores, and repair state.
+Build the smallest Streamlit demo UI that makes the Caption Compass quality path visible to a hackathon judge:
 
-    ## Why This Exists
+```text
+video input -> timestamped evidence -> factual scene core -> four tonal bearings -> evaluator scores -> one bounded repair trace
+```
 
-    Caption Compass is being built for AMD Developer Hackathon: ACT II Track 2. The judging surface is factual accuracy and tone match across four required styles. This gate keeps implementation focused on the smallest useful slice that improves judge-readiness without leaking private research or overbuilding.
+The UI is not a general product dashboard. It is a trace viewer for the exact Track 2 judging surface.
 
-    ## Source-of-Truth References
+## Why This Exists
 
-    - Public repository: `8088cruz/caption-compass`
-    - Repository URL: https://github.com/8088cruz/caption-compass
-    - Track 2 target: Video Captioning
-    - Product thesis: one factual scene core, four tonal bearings, built-in accuracy and tone checks
-    - Required tones: formal, sarcastic, humorous-tech, humorous-non-tech
-    - Preferred stack: Python, Streamlit, ffmpeg, Fireworks AI API, Gemma when available, Docker
-    - README gate policy: `docs/README_GATE_POLICY.md`
-    - Current gate prompt: `docs/implementation-prompts/gate-c7.prompt.md`
-    - Current todo prompt: `docs/implementation-prompts/todos/c7-t01-streamlit-demo-ui.prompt.md`
+Track 2 is judged on factual accuracy and tone match. C7 must make those qualities inspectable in under one minute. A judge should not need to infer that the system is careful; the UI should show the evidence chain, the stable factual core, the four style renderings, the evaluator result, and any one-pass repair.
 
-    ## Scope
+C7 is where Caption Compass becomes visibly more credible than a basic caption generator.
 
-    - Show the product flow clearly in one screen or a short sequence.
-- Keep the four tone outputs side by side.
-- Show evaluator results in a judge-readable way.
-- Avoid exposing local paths, secrets, or private references.
+## Source-of-Truth References
 
-    ## Out of Scope
+- `SKILL.md`
+- `docs/README_GATE_POLICY.md`
+- `docs/implementation-prompts/gate-c7.prompt.md`
+- `docs/implementation-prompts/todos/c7-t01-streamlit-demo-ui.prompt.md`
+- C2 frame evidence from `docs/execution/02-video-frame-ingestion.execution.md`
+- C3 factual scene core from `docs/execution/03-factual-scene-core.execution.md`
+- C4 four-tone captions from `docs/execution/04-four-tone-caption-generation.execution.md`
+- C5 evaluator from `docs/execution/05-accuracy-tone-evaluator.execution.md`
+- C6 repair trace from `docs/execution/06-retry-repair-loop.execution.md`
 
-    - Auth
-- Database
-- Teams/multi-user support
+## Scope
+
+- Add a minimal Streamlit UI or equivalent thin demo entrypoint.
+- Let a user upload/select a video or run a safe sample fixture.
+- Show timestamped frame evidence anchors.
+- Show the style-free factual scene core.
+- Show four captions side by side.
+- Show evaluator scores and issue codes.
+- Show one bounded repair trace when a repair occurs.
+- Show provider/stub mode clearly.
+- Surface missing API key, missing ffmpeg, invalid video, and malformed model output states clearly.
+- Keep local paths, secrets, and private references out of public UI output and screenshots.
+- Produce a screenshot/golden-path proof artifact.
+
+## Out of Scope
+
+- Auth
+- User accounts
+- Database-backed history
 - Complex theming
+- Analytics
+- Multi-user review
+- Human preference ranking
+- New provider abstractions
+- New captioning behavior beyond displaying prior gates
+- Claims that the app is complete before C8
 
-    ## Prerequisites
+## Prerequisites
 
-    - Complete prior gates in order unless explicitly running C0.
-    - Keep repository public-safe and MIT-compatible.
-    - Keep future work under planned/roadmap language only.
-    - Use stub or deterministic behavior when real Fireworks credentials are unavailable.
-    - Read `SKILL.md` before implementing.
-    - Read `docs/README_GATE_POLICY.md` before editing README.
+- C1 scaffold exists.
+- C2-C6 service contracts exist or the UI can read deterministic sample artifacts for missing live provider behavior.
+- `streamlit` or chosen UI dependency is available.
+- Stub/test mode works without network.
+- `SKILL.md` has been read.
+- `docs/README_GATE_POLICY.md` has been read before README edits.
 
-    ## Files/Packages Likely Touched
+## Files/Packages Likely Touched
 
-    ```text
-    streamlit app
-app services
-sample outputs
-tests optional
-    ```
+```text
+app/main.py
+app/ui.py
+app/pipeline.py
+app/contracts.py
+app/providers.py
+tests/test_ui.py
+tests/test_pipeline_smoke.py
+docs/artifacts/c7-demo-proof.md
+README.md
+```
 
-    ## Commands or UI Actions Added
+Exact paths may differ if the C1 scaffold uses a different package layout. Keep the UI thin and align with the existing repo structure.
 
-    Gate-specific commands or UI controls should be minimal. Prefer a working local command, test, or Streamlit interaction over broad architecture.
+## Commands or UI Actions Added
 
-    Suggested verification command:
+Expected local UI command:
 
-    ```bash
-    python -m pytest -k 'ui or smoke or app'
-    ```
+```bash
+streamlit run app/main.py
+```
 
-    ## Data Contracts
+Suggested verification command:
 
-    The final project should converge on these public JSON contracts. This gate should implement only the relevant subset:
+```bash
+python -m pytest -k "ui or smoke or app or pipeline"
+```
 
-    ```json
-    {
-      "scene_core": {
-        "summary": "factual, style-free scene description",
-        "observed_entities": [],
-        "observed_actions": [],
-        "setting": null,
-        "visible_text": [],
-        "uncertainties": []
-      },
-      "captions": {
-        "formal": "...",
-        "sarcastic": "...",
-        "humorous_tech": "...",
-        "humorous_non_tech": "..."
-      },
-      "evaluation": {
-        "formal": {"factual_accuracy": 1, "tone_match": 1, "clarity": 1, "issues": []}
+Suggested artifact check:
+
+```bash
+test -f docs/artifacts/c7-demo-proof.md
+```
+
+If a screenshot is captured, store it in a public-safe relative path such as:
+
+```text
+docs/artifacts/c7-demo-screenshot.png
+```
+
+Do not commit screenshots that reveal private files, local paths, secrets, unrelated browser tabs, or private work.
+
+## Data Contracts
+
+C7 should display existing contracts, not invent new semantics.
+
+### Judge Trace View Model
+
+The UI may assemble a view model equivalent to:
+
+```json
+{
+  "mode": "stub-or-provider",
+  "source_video_id": "stable-video-id",
+  "trace_status": "complete",
+  "evidence": {
+    "sample_strategy": "bounded_uniform",
+    "frames": [
+      {
+        "frame_id": "f001",
+        "timestamp_seconds": 0.0,
+        "image_ref": "artifacts/frames/f001.jpg"
       }
-    }
-    ```
+    ]
+  },
+  "scene_core": {
+    "scene_core_id": "stable-scene-core-id",
+    "summary": "style-free factual summary",
+    "observed_entities": [],
+    "observed_actions": [],
+    "uncertainties": [],
+    "unsupported_inferences": []
+  },
+  "captions": {
+    "formal": {"text": "...", "tone": "formal"},
+    "sarcastic": {"text": "...", "tone": "sarcastic"},
+    "humorous_tech": {"text": "...", "tone": "humorous-tech"},
+    "humorous_non_tech": {"text": "...", "tone": "humorous-non-tech"}
+  },
+  "evaluation": {
+    "overall": {"passed": true, "repair_recommended": false},
+    "evaluation": {}
+  },
+  "repair": {
+    "max_repair_attempts": 1,
+    "repair_history": [],
+    "final_captions": {}
+  },
+  "warnings": []
+}
+```
 
-    This gate should implement only the pieces required by its scope.
+### UI Section Requirements
 
-    ### Scene Core Contract
+The visible UI should have these sections, in this order unless there is a strong local design reason:
 
-    The scene core is style-free. It should contain observed or cautiously inferred facts only:
+1. Input and mode status
+2. Timestamped evidence
+3. Factual scene core
+4. Four tonal bearings
+5. Accuracy/tone evaluation
+6. Repair trace
+7. Known limitations or warnings
 
-    ```json
-    {
-      "summary": "short factual description",
-      "observed_entities": ["person", "object"],
-      "observed_actions": ["walks", "points"],
-      "setting": "visible setting or null",
-      "visible_text": [],
-      "audio_notes": [],
-      "uncertainties": ["what is unclear"],
-      "frame_evidence": []
-    }
-    ```
+## Service Boundary
 
-    ### Caption Contract
+- UI reads or invokes services from C2-C6.
+- UI does not own video extraction, scene reasoning, caption generation, evaluation, or repair logic.
+- UI does not mutate the factual scene core.
+- UI does not hide provider errors.
+- UI does not send secrets or private repo content to providers.
+- UI may render sample artifacts in stub mode.
 
-    Captions must preserve the same factual core while changing only presentation style:
+## Provider/API Boundary
 
-    ```json
-    {
-      "formal": "neutral professional caption",
-      "sarcastic": "dry but fact-preserving caption",
-      "humorous_tech": "developer/tech humor caption",
-      "humorous_non_tech": "general audience humorous caption"
-    }
-    ```
+- Real provider mode requires `FIREWORKS_API_KEY`.
+- Stub mode must run without network.
+- Missing key should be visible as a clear UI state, not a crash.
+- Provider output remains draft until evaluation is displayed.
+- The UI must not expose API keys, absolute local paths, private research material, or implementation-pack internals.
 
-    ### Evaluation Contract
+## Prompt Contracts
 
-    Evaluator output must be judge-legible:
+C7 should not introduce new core prompts. If a UI action calls provider-backed services, it must use existing C3-C6 prompt contracts.
 
-    ```json
-    {
-      "caption_key": {
-        "factual_accuracy": 1,
-        "tone_match": 1,
-        "clarity": 1,
-        "issues": [],
-        "rewrite_hint": null
-      }
-    }
-    ```
+Do not add UI-only prompt instructions that bypass:
 
-    ## Service Boundary
+- factual scene core separation
+- unsupported inference handling
+- tone rubrics
+- evaluator issue taxonomy
+- one-repair-pass discipline
 
-    - Keep UI thin.
-    - Keep provider calls behind a small adapter or service.
-    - Keep prompt construction separate from Streamlit widgets.
-    - Keep data contracts testable without network.
-    - Keep local file paths out of public JSON and screenshots.
-    - Keep frame extraction separate from scene reasoning.
-    - Keep scene reasoning separate from tone rendering.
-    - Keep evaluation separate from generation.
+## Tests
 
-    ## Provider/API Boundary
+Add deterministic tests or smoke checks for:
 
-    - Fireworks/Gemma calls require explicit `FIREWORKS_API_KEY`.
-    - Stub/test mode must work without network.
-    - Do not send secrets, private repo content, private docs, or local paths as model context.
-    - Provider outputs are draft until evaluated or shown as generated outputs.
+- UI entrypoint imports without provider credentials
+- sample fixture or stub trace renders/assembles successfully
+- visible trace model includes evidence, scene core, captions, evaluation, and repair keys
+- missing API key produces an explicit status or warning
+- public UI output does not include secrets, absolute local paths, or private references
+- README does not claim deployment/Docker readiness before C8
 
-    ## Prompt Contracts
+When full UI automation is too costly, test the view-model or pipeline function directly and document manual UI verification in `docs/artifacts/c7-demo-proof.md`.
 
-    Prompts should:
+## README Update Requirements
 
-    - preserve factual core before style rendering
-    - make uncertainty explicit
-    - avoid invented details
-    - produce judge-friendly JSON
-    - keep humor accessible and non-obscure
-    - return strict JSON when a service expects JSON
-    - avoid internal project jargon in model-facing instructions
+Update README.md to reflect this gate's actual completed behavior. Do not document future gates as implemented.
 
-    ## Tests
+README claims must be backed by:
 
-    Add or preserve tests appropriate to this gate. Prefer deterministic tests for schemas, service behavior, and public-safe output.
+- `docs/artifacts/c7-demo-proof.md`
+- a passing test or smoke command
+- a working local UI command
+- a public-safe screenshot only if captured
 
-    Suggested command:
+README must include:
 
-    ```bash
-    python -m pytest -k 'ui or smoke or app'
-    ```
+- current gate status
+- working UI command only if it works
+- provider/stub mode limitations
+- known UI limitations
+- planned C8 Docker/submission work as planned, not implemented
 
-    ### Direct Service Tests
+## Acceptance Criteria
 
-    Add direct tests for the smallest service involved in this gate. Tests should not require network unless the gate explicitly covers real provider integration.
+- A judge-visible trace can be rendered in stub mode.
+- The UI shows evidence, factual core, four tones, evaluator scores, and repair trace or no-repair state.
+- The UI makes provider/stub status clear.
+- The UI stays thin and delegates behavior to services.
+- A C7 demo proof artifact exists.
+- README describes only verified C7 behavior.
+- No private references, secrets, or absolute local paths appear in public artifacts.
 
-    ### Contract Tests
+## Implementation Steps
 
-    Validate JSON shape, required keys, and failure handling for malformed inputs.
+1. Read `SKILL.md`.
+2. Read `docs/README_GATE_POLICY.md`.
+3. Read this execution document.
+4. Inspect C2-C6 contracts and sample artifacts.
+5. Define the minimal trace view model if one does not already exist.
+6. Add or update tests for trace assembly and public-safe output.
+7. Implement the Streamlit UI as a thin layer.
+8. Run the suggested verification command.
+9. Run the UI locally if practical.
+10. Create `docs/artifacts/c7-demo-proof.md`.
+11. Capture a screenshot only if it is public-safe.
+12. Update README conservatively.
+13. Report changed files, test results, artifact path, and next gate.
 
-    ### Public-Safety Tests
+## Reviewer Confidence Signal
 
-    Where practical, assert outputs do not include local filesystem paths, secrets, private repo names, or private research terms.
+A reviewer should be able to open the UI or artifact and understand:
 
-    ### README Sync Test/Check
+- what video/sample was used
+- which frame anchors were sampled
+- what factual core was generated
+- how the same facts became four tones
+- how the evaluator scored accuracy and tone
+- whether repair happened
+- what command proves the gate
+- what remains for C8
 
-    Manually inspect README after the gate. The README must not claim future gates are implemented.
+## Benchmark / Evidence Artifact
 
-    ## README Update Requirements
+This gate must leave behind:
 
-    Update README.md to reflect this gate's actual completed behavior. Do not document future gates as implemented.
+```text
+docs/artifacts/c7-demo-proof.md
+```
 
-    The README must include current gate status, working commands only, known limitations, and planned gates as future work.
+It must include:
 
-    ## Acceptance Criteria
+- exact UI run command
+- exact test/smoke command and status
+- sample input used
+- provider/stub mode used
+- visible UI sections
+- screenshot path if captured
+- known UI limitations
+- README sync summary
 
-    - Gate scope is complete.
-    - Tests or verification command pass, or blockers are documented.
-    - README is updated conservatively.
-    - No private or proprietary content is introduced.
-    - The project remains optimized for Track 2 accuracy and tone judging.
-    - The implementation can be explained in one minute to a hackathon judge.
-    - The next gate remains clearly separate.
+Optional artifact:
 
-    ## Implementation Steps
+```text
+docs/artifacts/c7-demo-screenshot.png
+```
 
-    1. Read `SKILL.md`.
-    2. Read `docs/README_GATE_POLICY.md`.
-    3. Read this execution document.
-    4. Inspect the current repo tree.
-    5. Identify the smallest files needed for this gate.
-    6. Add or update tests first when practical.
-    7. Implement only this gate.
-    8. Run the suggested verification command.
-    9. Update README with actual completed behavior only.
-    10. Report changed files, test results, risks, and next gate.
+Only commit the screenshot if it is safe, small, and useful.
 
-    ## Reviewer Confidence Signal
+## Demo Commands
 
-    A reviewer should be able to see exactly what changed, why it matters for Track 2 judging, how it was verified, and what remains planned.
+```bash
+streamlit run app/main.py
+python -m pytest -k "ui or smoke or app or pipeline"
+test -f docs/artifacts/c7-demo-proof.md
+```
 
-    ## Benchmark / Evidence Artifact
+## Expected Output
 
-    Each gate should leave behind at least one useful artifact: passing tests, a working command, sample JSON, screenshot-ready UI state, or README instructions.
+A public-safe demo UI and proof artifact that show the Caption Compass trace from input to evaluation/repair.
 
-    ## Demo Commands
+## Failure Cases
 
-    Use the simplest command that proves this gate. If no command exists yet, use `true` and document why.
+- UI hides evaluator or repair output
+- UI only shows final captions
+- UI crashes without Fireworks credentials
+- UI leaks absolute local paths
+- UI screenshots expose private files or browser tabs
+- UI implies Docker/deployment readiness before C8
+- UI adds new captioning behavior instead of displaying service outputs
+- README claims future work as implemented
 
-    ```bash
-    python -m pytest -k 'ui or smoke or app'
-    ```
+## Stop/Gate Criteria
 
-    ## Expected Output
+Stop if the UI cannot show the trace, if the proof artifact cannot be produced, if public-safe boundaries weaken, or if implementation starts C8 submission/Docker work.
 
-    Public-safe project files and/or demo behavior that prove this gate only. Outputs should not include secrets, private repo paths, or private research references.
+## Suggested Conventional Commit
 
-    ## Failure Cases
-
-    - Missing Fireworks key
-    - Missing ffmpeg
-    - Invalid video input
-    - Model output is malformed JSON
-    - Caption invents facts
-    - Tone is ambiguous
-    - README claims future work is done
-
-    ## Stop/Gate Criteria
-
-    Stop if implementation broadens beyond this gate, weakens public-safe boundaries, removes README synchronization, or claims completion before the behavior works.
-
-    ## Suggested Conventional Commit
-
-    ```text
-    feat(ui): add Caption Compass demo path
-    ```
+```text
+feat(ui): add judge-visible trace demo
+```

@@ -1,264 +1,299 @@
-# Execution: C8 - Docker, README, slides/video script, submission readiness
+# Execution: C8 - Runnable Submission Artifact
 
-    ## Goal
+## Goal
 
-    Prepare the public repo for hackathon submission with Docker, README, demo instructions, slide outline, and video script.
+Prepare Caption Compass for hackathon submission with a runnable container, honest README, demo materials, and a concrete readiness artifact.
 
-    ## Why This Exists
+C8 is complete only when a judge can clone the public repo, follow the README, run the app, and understand what is implemented.
 
-    Caption Compass is being built for AMD Developer Hackathon: ACT II Track 2. The judging surface is factual accuracy and tone match across four required styles. This gate keeps implementation focused on the smallest useful slice that improves judge-readiness without leaking private research or overbuilding.
+## Why This Exists
 
-    ## Source-of-Truth References
+The hackathon requires a public repo, runnable instructions, containerization, demo URL or app platform details, video presentation, and slide presentation. C8 turns the implementation into a submission artifact without adding new core behavior.
 
-    - Public repository: `8088cruz/caption-compass`
-    - Repository URL: https://github.com/8088cruz/caption-compass
-    - Track 2 target: Video Captioning
-    - Product thesis: one factual scene core, four tonal bearings, built-in accuracy and tone checks
-    - Required tones: formal, sarcastic, humorous-tech, humorous-non-tech
-    - Preferred stack: Python, Streamlit, ffmpeg, Fireworks AI API, Gemma when available, Docker
-    - README gate policy: `docs/README_GATE_POLICY.md`
-    - Current gate prompt: `docs/implementation-prompts/gate-c8.prompt.md`
-    - Current todo prompt: `docs/implementation-prompts/todos/c8-t01-docker-readme-submission.prompt.md`
+This gate should prove:
 
-    ## Scope
+```text
+public repo -> install/run instructions -> Docker/container run -> demo trace -> submission checklist
+```
 
-    - Document only implemented features as complete.
-- Provide one-command local run path.
-- Include Fireworks API key setup.
-- Include demo video script and slide outline.
+The final README must be accurate, not aspirational.
 
-    ## Out of Scope
+## Source-of-Truth References
 
-    - Major feature work
+- `SKILL.md`
+- `docs/README_GATE_POLICY.md`
+- `docs/implementation-prompts/gate-c8.prompt.md`
+- `docs/implementation-prompts/todos/c8-t01-docker-readme-submission.prompt.md`
+- C7 demo proof from `docs/execution/07-ui-demo-path.execution.md`
+- Current public repository: `8088cruz/caption-compass`
+
+## Scope
+
+- Add or verify `Dockerfile`.
+- Add or verify `.dockerignore` when useful.
+- Add or verify `.env.example`.
+- Add or verify `LICENSE` for MIT compliance.
+- Make README describe only implemented behavior.
+- Include working local run command.
+- Include working Docker build/run commands.
+- Include Fireworks/Gemma setup instructions honestly.
+- Include stub/test mode instructions.
+- Include demo URL status or deployment notes.
+- Add concise demo video script.
+- Add concise slide deck outline.
+- Add final submission checklist.
+- Produce `docs/artifacts/c8-submission-readiness.md`.
+
+## Out of Scope
+
+- New captioning features
+- New evaluator or repair behavior
 - New provider abstractions
-- Fine-tuning
+- Fine-tuning unless already implemented and verified
+- Major UI redesign
+- Auth, database, multi-user features
+- Benchmark superiority claims
+- Claims that evaluator scores prove truth
 - Post-hackathon roadmap beyond a concise planned section
 
-    ## Prerequisites
+## Prerequisites
 
-    - Complete prior gates in order unless explicitly running C0.
-    - Keep repository public-safe and MIT-compatible.
-    - Keep future work under planned/roadmap language only.
-    - Use stub or deterministic behavior when real Fireworks credentials are unavailable.
-    - Read `SKILL.md` before implementing.
-    - Read `docs/README_GATE_POLICY.md` before editing README.
+- C7 demo path exists or a blocker is documented.
+- Tests or smoke checks exist.
+- README gate policy has been read.
+- Stub/test mode works without network or its blocker is explicit.
+- Provider mode has clear environment variable instructions.
 
-    ## Files/Packages Likely Touched
+## Files/Packages Likely Touched
 
-    ```text
-    Dockerfile
-README.md
-LICENSE
+```text
+Dockerfile
+.dockerignore
 .env.example
-submission docs
-smoke tests
-    ```
+LICENSE
+README.md
+docs/submission/demo-video-script.md
+docs/submission/slide-deck-outline.md
+docs/artifacts/c8-submission-readiness.md
+tests/
+```
 
-    ## Commands or UI Actions Added
+Exact paths may differ if the repo has established equivalents. Keep changes minimal.
 
-    Gate-specific commands or UI controls should be minimal. Prefer a working local command, test, or Streamlit interaction over broad architecture.
+## Commands or UI Actions Added
 
-    Suggested verification command:
+Expected local run:
 
-    ```bash
-    docker build -t caption-compass . && python -m pytest
-    ```
+```bash
+streamlit run app/main.py
+```
 
-    ## Data Contracts
+Expected tests:
 
-    The final project should converge on these public JSON contracts. This gate should implement only the relevant subset:
+```bash
+python -m pytest
+```
 
-    ```json
-    {
-      "scene_core": {
-        "summary": "factual, style-free scene description",
-        "observed_entities": [],
-        "observed_actions": [],
-        "setting": null,
-        "visible_text": [],
-        "uncertainties": []
-      },
-      "captions": {
-        "formal": "...",
-        "sarcastic": "...",
-        "humorous_tech": "...",
-        "humorous_non_tech": "..."
-      },
-      "evaluation": {
-        "formal": {"factual_accuracy": 1, "tone_match": 1, "clarity": 1, "issues": []}
-      }
-    }
-    ```
+Expected Docker build:
 
-    This gate should implement only the pieces required by its scope.
+```bash
+docker build -t caption-compass .
+```
 
-    ### Scene Core Contract
+Expected Docker run:
 
-    The scene core is style-free. It should contain observed or cautiously inferred facts only:
+```bash
+docker run --env-file .env -p 8501:8501 caption-compass
+```
 
-    ```json
-    {
-      "summary": "short factual description",
-      "observed_entities": ["person", "object"],
-      "observed_actions": ["walks", "points"],
-      "setting": "visible setting or null",
-      "visible_text": [],
-      "audio_notes": [],
-      "uncertainties": ["what is unclear"],
-      "frame_evidence": []
-    }
-    ```
+If `.env` is not required for stub mode, provide a stub-mode Docker command as well.
 
-    ### Caption Contract
+## Data Contracts
 
-    Captions must preserve the same factual core while changing only presentation style:
+C8 does not change data contracts. It must preserve and document the existing contracts:
 
-    ```json
-    {
-      "formal": "neutral professional caption",
-      "sarcastic": "dry but fact-preserving caption",
-      "humorous_tech": "developer/tech humor caption",
-      "humorous_non_tech": "general audience humorous caption"
-    }
-    ```
+- C2 frame evidence packet
+- C3 factual scene core
+- C4 four-tone caption set
+- C5 evaluation result
+- C6 repair result
+- C7 trace view model
 
-    ### Evaluation Contract
+README examples should use committed, public-safe sample artifacts where possible.
 
-    Evaluator output must be judge-legible:
+## Service Boundary
 
-    ```json
-    {
-      "caption_key": {
-        "factual_accuracy": 1,
-        "tone_match": 1,
-        "clarity": 1,
-        "issues": [],
-        "rewrite_hint": null
-      }
-    }
-    ```
+- C8 packages and documents the existing app.
+- C8 must not move core logic into Docker or README scripts.
+- C8 must not bypass tests.
+- C8 must not hide known provider/API requirements.
+- C8 must not use private assets or local-only paths in submission materials.
 
-    ## Service Boundary
+## Provider/API Boundary
 
-    - Keep UI thin.
-    - Keep provider calls behind a small adapter or service.
-    - Keep prompt construction separate from Streamlit widgets.
-    - Keep data contracts testable without network.
-    - Keep local file paths out of public JSON and screenshots.
-    - Keep frame extraction separate from scene reasoning.
-    - Keep scene reasoning separate from tone rendering.
-    - Keep evaluation separate from generation.
+README and `.env.example` must state:
 
-    ## Provider/API Boundary
+- `FIREWORKS_API_KEY` is required for real provider mode.
+- Stub/test mode can run without network if implemented.
+- API keys must not be committed.
+- Provider behavior is model-assisted and may vary.
+- Gemma usage should be described only if actually implemented and visible.
 
-    - Fireworks/Gemma calls require explicit `FIREWORKS_API_KEY`.
-    - Stub/test mode must work without network.
-    - Do not send secrets, private repo content, private docs, or local paths as model context.
-    - Provider outputs are draft until evaluated or shown as generated outputs.
+Do not claim Gemma prize alignment unless Gemma is meaningfully used in captioning, evaluation, repair, or a clearly documented provider mode.
 
-    ## Prompt Contracts
+## Prompt Contracts
 
-    Prompts should:
+C8 should not introduce new prompt behavior.
 
-    - preserve factual core before style rendering
-    - make uncertainty explicit
-    - avoid invented details
-    - produce judge-friendly JSON
-    - keep humor accessible and non-obscure
-    - return strict JSON when a service expects JSON
-    - avoid internal project jargon in model-facing instructions
+Submission docs may summarize:
 
-    ## Tests
+- factual scene core separation
+- four tone generation
+- evaluator issue taxonomy
+- one repair pass
 
-    Add or preserve tests appropriate to this gate. Prefer deterministic tests for schemas, service behavior, and public-safe output.
+They must not include private references, hidden context, source-book quotes, or internal system names.
 
-    Suggested command:
+## Tests
 
-    ```bash
-    docker build -t caption-compass . && python -m pytest
-    ```
+Add or verify:
 
-    ### Direct Service Tests
+- `python -m pytest`
+- Docker build succeeds or blocker is documented
+- Docker run command is documented and smoke-tested when practical
+- README command examples match actual commands
+- `.env.example` exists if provider mode exists
+- public artifacts contain no secrets, absolute local paths, or private references
+- C8 readiness artifact exists
 
-    Add direct tests for the smallest service involved in this gate. Tests should not require network unless the gate explicitly covers real provider integration.
+If Docker cannot run in the current environment, document the exact command attempted and blocker in `docs/artifacts/c8-submission-readiness.md`.
 
-    ### Contract Tests
+## README Update Requirements
 
-    Validate JSON shape, required keys, and failure handling for malformed inputs.
+Update README.md to reflect this gate's actual completed behavior. Do not document future gates as implemented.
 
-    ### Public-Safety Tests
+README must include:
 
-    Where practical, assert outputs do not include local filesystem paths, secrets, private repo names, or private research terms.
+- project summary
+- current implementation status
+- local setup
+- local run command
+- test command
+- Docker build/run command
+- Fireworks/Gemma setup
+- stub mode instructions
+- demo URL or deployment status
+- known limitations
+- artifact list
+- license
+- submission materials links
 
-    ### README Sync Test/Check
+README must not:
 
-    Manually inspect README after the gate. The README must not claim future gates are implemented.
+- claim unimplemented provider mode
+- claim Docker works if it was not verified or a blocker is not documented
+- claim evaluator proof of correctness
+- claim fine-tuning if not implemented
+- include private references or local-only paths
 
-    ## README Update Requirements
+## Acceptance Criteria
 
-    Update README.md to reflect this gate's actual completed behavior. Do not document future gates as implemented.
+- README is accurate and runnable.
+- Dockerfile exists and build/run status is documented.
+- `.env.example` exists if provider mode needs environment variables.
+- MIT license exists or is explicitly confirmed.
+- Demo video script exists.
+- Slide deck outline exists.
+- C8 submission readiness artifact exists.
+- Known limitations are listed.
+- No private references, secrets, absolute local paths, or unsupported claims appear in public docs.
 
-    The README must include current gate status, working commands only, known limitations, and planned gates as future work.
+## Implementation Steps
 
-    ## Acceptance Criteria
+1. Read `SKILL.md`.
+2. Read `docs/README_GATE_POLICY.md`.
+3. Read this execution document.
+4. Inspect C7 proof artifact and current README.
+5. Verify local test command.
+6. Add or update Dockerfile and `.dockerignore`.
+7. Add or update `.env.example`.
+8. Add or verify MIT `LICENSE`.
+9. Add demo video script.
+10. Add slide deck outline.
+11. Run Docker build/run checks where practical.
+12. Create `docs/artifacts/c8-submission-readiness.md`.
+13. Update README from verified behavior only.
+14. Report changed files, test results, Docker status, artifact path, and submission gaps.
 
-    - Gate scope is complete.
-    - Tests or verification command pass, or blockers are documented.
-    - README is updated conservatively.
-    - No private or proprietary content is introduced.
-    - The project remains optimized for Track 2 accuracy and tone judging.
-    - The implementation can be explained in one minute to a hackathon judge.
-    - The next gate remains clearly separate.
+## Reviewer Confidence Signal
 
-    ## Implementation Steps
+A reviewer should be able to see:
 
-    1. Read `SKILL.md`.
-    2. Read `docs/README_GATE_POLICY.md`.
-    3. Read this execution document.
-    4. Inspect the current repo tree.
-    5. Identify the smallest files needed for this gate.
-    6. Add or update tests first when practical.
-    7. Implement only this gate.
-    8. Run the suggested verification command.
-    9. Update README with actual completed behavior only.
-    10. Report changed files, test results, risks, and next gate.
+- exact commands to run
+- whether commands were verified
+- Docker readiness
+- provider/stub mode status
+- demo materials
+- submission checklist
+- known limitations
+- no public/private boundary leakage
 
-    ## Reviewer Confidence Signal
+## Benchmark / Evidence Artifact
 
-    A reviewer should be able to see exactly what changed, why it matters for Track 2 judging, how it was verified, and what remains planned.
+This gate must leave behind:
 
-    ## Benchmark / Evidence Artifact
+```text
+docs/artifacts/c8-submission-readiness.md
+```
 
-    Each gate should leave behind at least one useful artifact: passing tests, a working command, sample JSON, screenshot-ready UI state, or README instructions.
+It must include:
 
-    ## Demo Commands
+- local run command and status
+- test command and status
+- Docker build command and status
+- Docker run command and status
+- demo URL status or deployment notes
+- Fireworks/Gemma status
+- README status
+- license status
+- demo video script path
+- slide deck outline path
+- known limitations
+- final submission checklist
+- unresolved blockers
 
-    Use the simplest command that proves this gate. If no command exists yet, use `true` and document why.
+## Demo Commands
 
-    ```bash
-    docker build -t caption-compass . && python -m pytest
-    ```
+```bash
+python -m pytest
+docker build -t caption-compass .
+docker run --env-file .env -p 8501:8501 caption-compass
+test -f docs/artifacts/c8-submission-readiness.md
+```
 
-    ## Expected Output
+Use an alternate documented stub-mode Docker command if `.env` is unnecessary for stub mode.
 
-    Public-safe project files and/or demo behavior that prove this gate only. Outputs should not include secrets, private repo paths, or private research references.
+## Expected Output
 
-    ## Failure Cases
+A public, MIT-compliant, runnable hackathon submission package with accurate README and submission materials.
 
-    - Missing Fireworks key
-    - Missing ffmpeg
-    - Invalid video input
-    - Model output is malformed JSON
-    - Caption invents facts
-    - Tone is ambiguous
-    - README claims future work is done
+## Failure Cases
 
-    ## Stop/Gate Criteria
+- Docker build fails and blocker is not documented
+- README commands do not work
+- README claims future behavior
+- Demo script claims unimplemented features
+- Gemma usage is claimed but not implemented
+- API key guidance is missing
+- Known limitations are hidden
+- Public files leak local paths, secrets, or private references
 
-    Stop if implementation broadens beyond this gate, weakens public-safe boundaries, removes README synchronization, or claims completion before the behavior works.
+## Stop/Gate Criteria
 
-    ## Suggested Conventional Commit
+Stop if Docker/readiness cannot be honestly documented, if README starts making unsupported claims, if private references appear, or if implementation starts adding new product features instead of packaging the app.
 
-    ```text
-    docs(submission): prepare Caption Compass hackathon submission
-    ```
+## Suggested Conventional Commit
+
+```text
+docs(submission): add runnable submission artifact
+```
