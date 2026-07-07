@@ -1,0 +1,72 @@
+{
+  "extraction": {
+    "local_paths_included": false,
+    "status": "ok",
+    "tooling": "ffmpeg/ffprobe",
+    "warnings": []
+  },
+  "frames": [
+    {
+      "frame_id": "frame_0001",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0001",
+      "timestamp_label": "00:04.698",
+      "timestamp_seconds": 4.698
+    },
+    {
+      "frame_id": "frame_0002",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0002",
+      "timestamp_label": "00:14.094",
+      "timestamp_seconds": 14.094
+    },
+    {
+      "frame_id": "frame_0003",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0003",
+      "timestamp_label": "00:23.490",
+      "timestamp_seconds": 23.49
+    },
+    {
+      "frame_id": "frame_0004",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0004",
+      "timestamp_label": "00:32.886",
+      "timestamp_seconds": 32.886
+    },
+    {
+      "frame_id": "frame_0005",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0005",
+      "timestamp_label": "00:42.281",
+      "timestamp_seconds": 42.281
+    },
+    {
+      "frame_id": "frame_0006",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0006",
+      "timestamp_label": "00:51.677",
+      "timestamp_seconds": 51.677
+    },
+    {
+      "frame_id": "frame_0007",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0007",
+      "timestamp_label": "01:01.073",
+      "timestamp_seconds": 61.073
+    },
+    {
+      "frame_id": "frame_0008",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0008",
+      "timestamp_label": "01:10.469",
+      "timestamp_seconds": 70.469
+    }
+  ],
+  "gate": "C2",
+  "sampling": {
+    "requested_frame_count": 8,
+    "sampled_frame_count": 8,
+    "strategy": "center-of-equal-time-segments"
+  },
+  "schema_version": "c2.frame_evidence.v1",
+  "source_video": {
+    "duration_seconds": 75.167,
+    "frame_rate": 30.0,
+    "height": 1920,
+    "identifier": "13153635_1080_1920_30fps.mp4",
+    "width": 1080
+  }
+}
