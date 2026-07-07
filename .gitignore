@@ -2,7 +2,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .venv/
+local_test_videos/
 dist/
 build/
 *.egg-info/
-local_test_videos

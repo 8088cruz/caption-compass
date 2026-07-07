@@ -7,20 +7,22 @@ from caption_compass import build_scaffold_status
 
 
 class ScaffoldStatusTests(unittest.TestCase):
-    def test_scaffold_status_is_c1_only(self) -> None:
+    def test_project_status_reports_c2(self) -> None:
         status = build_scaffold_status()
 
         self.assertEqual(status["project"], "Caption Compass")
-        self.assertEqual(status["gate"], "C1")
-        self.assertEqual(status["status"], "scaffold-ready")
+        self.assertEqual(status["gate"], "C2")
+        self.assertEqual(status["status"], "frame-sampling-ready")
         self.assertIn("minimal Python package", status["implemented"])
+        self.assertIn("timestamped frame evidence sampling", status["implemented"])
 
     def test_future_gate_behavior_is_not_implemented(self) -> None:
         status = build_scaffold_status()
         future_behavior = " ".join(status["not_implemented"])
 
-        self.assertIn("video processing", future_behavior)
         self.assertIn("provider calls", future_behavior)
+        self.assertIn("scene interpretation", future_behavior)
+        self.assertIn("factual scene core", future_behavior)
         self.assertIn("caption generation", future_behavior)
         self.assertIn("accuracy or tone evaluation", future_behavior)
         self.assertIn("repair loop", future_behavior)
@@ -34,8 +36,8 @@ class ScaffoldStatusTests(unittest.TestCase):
         )
 
         status = json.loads(result.stdout)
-        self.assertEqual(status["gate"], "C1")
-        self.assertEqual(status["status"], "scaffold-ready")
+        self.assertEqual(status["gate"], "C2")
+        self.assertEqual(status["status"], "frame-sampling-ready")
         self.assertIn("demo UI", status["not_implemented"])
 
 

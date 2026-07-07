@@ -4,14 +4,15 @@ One factual scene core. Four tonal bearings. Built-in accuracy checks.
 
 Caption Compass is a public AMD Developer Hackathon: ACT II Track 2 video-captioning project. The project is scoped to preserve one style-free factual scene core and render exactly four required caption tones: formal, sarcastic, humorous-tech, and humorous-non-tech.
 
-At the current gate, this repository has a minimal runnable Python scaffold. Captioning behavior remains planned for later gates.
+At the current gate, this repository can sample timestamped frame evidence from a local video file. Captioning behavior remains planned for later gates.
 
 ## Current Status
 
-Gate status: **C1 implemented**
+Gate status: **C2 implemented**
 
 C0 artifact: [`docs/artifacts/c0-scope-boundary.md`](docs/artifacts/c0-scope-boundary.md)
 C1 artifact: [`docs/artifacts/c1-scaffold-proof.md`](docs/artifacts/c1-scaffold-proof.md)
+C2 artifact: [`docs/artifacts/c2-frame-evidence.sample.json`](docs/artifacts/c2-frame-evidence.sample.json)
 
 Implemented now:
 
@@ -22,10 +23,11 @@ Implemented now:
 - Minimal Python package scaffold
 - Deterministic scaffold status command
 - Basic scaffold tests run through `uv`
+- Timestamped frame evidence sampling from a local video file
+- Public-safe frame metadata JSON with stable frame refs
 
 Not implemented yet:
 
-- Video upload or frame extraction
 - Fireworks/Gemma provider calls
 - Factual scene core generation
 - Four-tone caption generation
@@ -45,23 +47,43 @@ uv sync
 Run the current scaffold with:
 
 ```bash
-uv run python -m caption_compass
+uv run caption-compass
 ```
 
-Expected output: JSON reporting `gate` as `C1` and `status` as `scaffold-ready`.
+Expected output: JSON reporting `gate` as `C2` and `status` as `frame-sampling-ready`.
+
+Sample timestamped frame evidence from a local video file:
+
+```bash
+uv run caption-compass sample-frames --video local_test_videos/sample.mp4 --output frame-evidence.json
+```
+
+Expected output: public-safe JSON metadata with sanitized source identifier, video duration when available, sampled frame timestamps, stable `frame://...` refs, extraction status, and warnings.
 
 ## Test And Verification Commands
 
 Run the scaffold tests with:
 
 ```bash
-uv run python -m pytest
+uv run pytest
+```
+
+Run the focused C2 tests with:
+
+```bash
+uv run pytest -k 'video or frame or ingestion'
 ```
 
 Verify the C1 artifact exists with:
 
 ```bash
 test -f docs/artifacts/c1-scaffold-proof.md
+```
+
+Verify the C2 artifact exists with:
+
+```bash
+test -f docs/artifacts/c2-frame-evidence.sample.json
 ```
 
 ## Planned Product Behavior
@@ -93,7 +115,7 @@ test -f docs/artifacts/c1-scaffold-proof.md
 | --- | --- | --- |
 | C0 | Implemented | Scope, public-safe boundary, judging target |
 | C1 | Implemented | Public repo/app scaffold |
-| C2 | Planned | Video upload and frame extraction |
+| C2 | Implemented | Video upload and frame extraction |
 | C3 | Planned | Factual scene core JSON contract |
 | C4 | Planned | Four-tone caption generation |
 | C5 | Planned | Accuracy/tone evaluator |
@@ -108,10 +130,13 @@ test -f docs/artifacts/c1-scaffold-proof.md
 
 ## Known Limitations
 
-- This repo is only a minimal runnable scaffold.
+- This repo currently produces frame evidence metadata only.
 - `uv sync` is the supported setup path.
-- No video processing exists yet.
+- Manual test videos should stay outside git, for example under ignored `local_test_videos/`.
+- Frame evidence output does not include absolute local paths.
+- C2 does not interpret scene content.
 - Live model behavior is not implemented yet.
+- No factual scene core exists yet.
 - No evaluator or repair behavior exists yet.
 - No demo UI exists yet.
 - Docker support is planned for C8.

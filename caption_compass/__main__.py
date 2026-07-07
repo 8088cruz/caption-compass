@@ -1,6 +1,6 @@
-"""Command entrypoint for the C1 scaffold proof."""
+"""Command entrypoint for Caption Compass."""
 
-from .scaffold import main
+from .cli import main
 
 
 if __name__ == "__main__":
