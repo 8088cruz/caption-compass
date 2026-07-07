@@ -2,25 +2,26 @@
 
 One factual scene core. Four tonal bearings. Built-in accuracy checks.
 
-Caption Compass is a public AMD Developer Hackathon: ACT II Track 2 video-captioning project. The target behavior is simple: sample a short video, build a style-free factual scene core, generate the four required caption styles, evaluate accuracy and tone, and repair weak captions once when possible.
+Caption Compass is a public AMD Developer Hackathon: ACT II Track 2 video-captioning project. The project is scoped to preserve one style-free factual scene core and render exactly four required caption tones: formal, sarcastic, humorous-tech, and humorous-non-tech.
+
+At the current gate, this repository locks the public-safe project boundary before application behavior starts.
 
 ## Current Status
 
-Gate status: **C0 pending**
+Gate status: **C0 implemented**
 
-This repository currently contains the research and implementation prompt pack. Application implementation has not started yet.
+C0 artifact: [`docs/artifacts/c0-scope-boundary.md`](docs/artifacts/c0-scope-boundary.md)
 
 Implemented now:
 
-- Public-safe project boundary documentation
-- Gate-based execution docs
-- Implementation prompts for C0-C8
+- Public-safe Track 2 scope boundary
 - README gate policy
-- Builder skill instructions
-- Gate visual maps
+- Gate visual map for the C0-C8 artifact chain
+- MIT license
 
 Not implemented yet:
 
+- Application scaffold
 - Video upload or frame extraction
 - Fireworks/Gemma provider calls
 - Factual scene core generation
@@ -30,10 +31,21 @@ Not implemented yet:
 - Streamlit UI
 - Docker runtime
 
+## C0 Verification
+
+The current gate is documentation-only. Verify the C0 artifact exists with:
+
+```bash
+true
+test -f docs/artifacts/c0-scope-boundary.md
+```
+
+No application run command exists yet. Add one during C1.
+
 ## Planned Product Behavior
 
 1. Sample timestamped frames from a short video clip.
-2. Build a factual scene core from visible evidence.
+2. Build a style-free factual scene core from visible evidence.
 3. Generate exactly four captions from the same factual core:
    - formal
    - sarcastic
@@ -53,27 +65,11 @@ Not implemented yet:
 - JSON contracts for scene core, captions, evaluation, and repair
 - Docker
 
-## Run Commands
-
-No application run command exists yet. Add one during C1.
-
-## Test Commands
-
-No test command exists yet. Add one during C1.
-
-## Known Limitations
-
-- This repo is not yet a runnable app.
-- Live model behavior is not implemented yet.
-- Docker support is planned for C8.
-- The evaluator, once implemented, will be a model-assisted quality check, not a proof of correctness.
-- Audio transcription is deferred unless the challenge clips require it.
-
 ## Implementation Gates
 
 | Gate | Status | Purpose |
 | --- | --- | --- |
-| C0 | Pending | Scope, public-safe boundary, judging target |
+| C0 | Implemented | Scope, public-safe boundary, judging target |
 | C1 | Planned | Public repo/app scaffold |
 | C2 | Planned | Video upload and frame extraction |
 | C3 | Planned | Factual scene core JSON contract |
@@ -83,14 +79,24 @@ No test command exists yet. Add one during C1.
 | C7 | Planned | Demo UI and golden path |
 | C8 | Planned | Docker, README, slides/video script, submission readiness |
 
-Docs:
+## Docs
 
-- [Gate Visual Maps](docs/GATE_VISUAL_MAPS.md) - visual overview of the C0-C8 gate system, artifacts, and judge-visible trace.
+- [`docs/README_GATE_POLICY.md`](docs/README_GATE_POLICY.md) - README truthfulness rules for every gate.
+- [`docs/GATE_VISUAL_MAPS.md`](docs/GATE_VISUAL_MAPS.md) - visual overview of the gate system, artifacts, and judge-visible trace.
+
+## Known Limitations
+
+- This repo is not yet a runnable app.
+- No video processing exists yet.
+- Live model behavior is not implemented yet.
+- No evaluator or repair behavior exists yet.
+- Docker support is planned for C8.
+- The future evaluator will be a model-assisted quality check, not a proof of correctness.
 
 ## README Discipline
 
-After each gate, update this README to describe only behavior that actually works. Future gates must remain under planned or roadmap language until implemented.
+After each gate, update this README to describe only behavior that actually exists. Future gates must remain planned until backed by a gate artifact, passing command, fixture, or schema.
 
 ## License
 
-MIT license planned. Add `LICENSE` during C0 or C1 before implementation work expands.
+MIT

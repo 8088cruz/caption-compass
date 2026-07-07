@@ -22,11 +22,12 @@ Hackathon judges need a truthful, runnable project. The README should be an accu
 - Include known limitations.
 - Keep Fireworks/Gemma setup honest.
 - Keep Docker instructions honest.
+- Back README claims with a gate artifact, passing command, fixture, or schema.
 
 ## Forbidden
 
 - Claiming the app is complete before C8.
 - Claiming real model support before provider calls work.
-- Claiming evaluator/retry behavior before it exists.
-- Mentioning private research systems or private repo paths.
+- Claiming evaluator or retry behavior before it exists.
+- Mentioning private research systems, private repo paths, secrets, or unpublished architecture.
 - Adding source-book quotes or private orchestration docs.
