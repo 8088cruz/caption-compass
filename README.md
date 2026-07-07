@@ -17,6 +17,7 @@ Implemented now:
 - Implementation prompts for C0-C8
 - README gate policy
 - Builder skill instructions
+- Gate visual maps
 
 Not implemented yet:
 
@@ -81,6 +82,10 @@ No test command exists yet. Add one during C1.
 | C6 | Planned | Retry/repair loop |
 | C7 | Planned | Demo UI and golden path |
 | C8 | Planned | Docker, README, slides/video script, submission readiness |
+
+Docs:
+
+- [Gate Visual Maps](docs/GATE_VISUAL_MAPS.md) - visual overview of the C0-C8 gate system, artifacts, and judge-visible trace.
 
 ## README Discipline
 
