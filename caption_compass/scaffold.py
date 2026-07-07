@@ -1,7 +1,6 @@
-"""Deterministic scaffold status for Caption Compass.
+"""Deterministic project status for Caption Compass.
 
-This module proves the project can run without implementing video processing,
-provider calls, caption generation, evaluation, repair, or UI behavior.
+This module reports verified gate status without claiming future behavior.
 """
 
 from __future__ import annotations
@@ -11,27 +10,29 @@ from typing import Any
 
 
 def build_scaffold_status() -> dict[str, Any]:
-    """Return the public C1 scaffold status."""
+    """Return the public project status through C2."""
 
     return {
         "project": "Caption Compass",
-        "gate": "C1",
-        "status": "scaffold-ready",
+        "gate": "C2",
+        "status": "frame-sampling-ready",
         "implemented": [
             "minimal Python package",
             "deterministic scaffold status command",
-            "basic offline verification tests",
+            "basic scaffold tests",
+            "timestamped frame evidence sampling",
         ],
         "not_implemented": [
-            "video processing",
             "provider calls",
+            "scene interpretation",
+            "factual scene core",
             "caption generation",
             "accuracy or tone evaluation",
             "repair loop",
             "demo UI",
             "Docker runtime",
         ],
-        "next_gate": "C2 planned: video upload and frame extraction",
+        "next_gate": "C3 planned: factual scene core JSON contract",
     }
 
 
