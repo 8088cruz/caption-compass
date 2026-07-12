@@ -1,0 +1,126 @@
+{
+  "contract_boundary": {
+    "captions_mutated": false,
+    "does_not_include": [
+      "automated repair",
+      "caption rewriting",
+      "repair loop",
+      "provider calls",
+      "leaderboard claims",
+      "objective truth proof"
+    ],
+    "local_paths_included": false,
+    "scores_are_heuristic": true
+  },
+  "evaluation": {
+    "formal": {
+      "clarity": 1.0,
+      "factual_accuracy": 1.0,
+      "issues": [],
+      "passed": true,
+      "repair_eligible": false,
+      "rewrite_hint": null,
+      "tone_match": 1.0
+    },
+    "humorous-non-tech": {
+      "clarity": 1.0,
+      "factual_accuracy": 1.0,
+      "issues": [],
+      "passed": true,
+      "repair_eligible": false,
+      "rewrite_hint": null,
+      "tone_match": 1.0
+    },
+    "humorous-tech": {
+      "clarity": 1.0,
+      "factual_accuracy": 1.0,
+      "issues": [],
+      "passed": true,
+      "repair_eligible": false,
+      "rewrite_hint": null,
+      "tone_match": 1.0
+    },
+    "sarcastic": {
+      "clarity": 1.0,
+      "factual_accuracy": 1.0,
+      "issues": [],
+      "passed": true,
+      "repair_eligible": false,
+      "rewrite_hint": null,
+      "tone_match": 1.0
+    }
+  },
+  "gate": "C5",
+  "generation": {
+    "input_contracts": [
+      "c3.scene_core.v1",
+      "c4.four_tone_captions.v1"
+    ],
+    "mode": "deterministic_stub",
+    "network_used": false,
+    "output_contract": "c5.evaluation.v1",
+    "provider": null
+  },
+  "issue_taxonomy": {
+    "invented_fact": {
+      "meaning": "Caption adds a fact absent from the factual scene core.",
+      "repair_eligible": true
+    },
+    "malformed_output": {
+      "meaning": "Provider output is invalid JSON or missing required fields.",
+      "repair_eligible": false
+    },
+    "missing_core_fact": {
+      "meaning": "Caption omits a key fact needed to preserve the scene core.",
+      "repair_eligible": true
+    },
+    "scene_core_mismatch": {
+      "meaning": "Caption output references a different scene_core_id.",
+      "repair_eligible": false
+    },
+    "tone_bleed": {
+      "meaning": "Caption overlaps too much with another tone.",
+      "repair_eligible": true
+    },
+    "tone_mismatch": {
+      "meaning": "Caption does not match its required tone.",
+      "repair_eligible": true
+    },
+    "uncertainty_overclaimed": {
+      "meaning": "Caption turns uncertainty into certainty.",
+      "repair_eligible": true
+    },
+    "unclear_joke": {
+      "meaning": "Humor is ambiguous, obscure, or hard to score.",
+      "repair_eligible": true
+    },
+    "unsafe_or_private_reference": {
+      "meaning": "Output contains private/system/internal references or unsafe content.",
+      "repair_eligible": false
+    },
+    "unsupported_inference_used": {
+      "meaning": "Caption uses a C3 unsupported inference as if true.",
+      "repair_eligible": true
+    }
+  },
+  "overall": {
+    "contract_issue_count": 0,
+    "failed_caption_keys": [],
+    "passed": true,
+    "repair_recommended": false
+  },
+  "scene_core_id": "scene_core_2e1a050701be1888",
+  "schema_version": "c5.evaluation.v1",
+  "source_video_id": "13153635_1080_1920_30fps.mp4",
+  "thresholds": {
+    "clarity_min": 0.7,
+    "factual_accuracy_min": 0.85,
+    "tone_match_min": 0.75
+  },
+  "tone_order": [
+    "formal",
+    "sarcastic",
+    "humorous-tech",
+    "humorous-non-tech"
+  ]
+}

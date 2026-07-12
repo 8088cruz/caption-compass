@@ -32,4 +32,5 @@ markers = [
     "c2: C2 video ingestion and frame sampling tests",
     "c3: C3 factual scene core contract tests",
     "c4: C4 four-tone caption contract tests",
+    "c5: C5 accuracy and tone evaluator tests",
 ]
