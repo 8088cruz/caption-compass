@@ -7,6 +7,12 @@ import json
 import sys
 from pathlib import Path
 
+from .captions import (
+    CaptionGenerationError,
+    generate_four_tone_captions,
+    load_scene_core_json,
+    write_captions_json,
+)
 from .scaffold import build_scaffold_status
 from .scene_core import (
     SceneCoreError,
@@ -53,6 +59,17 @@ def build_parser() -> argparse.ArgumentParser:
         default="-",
         help="output JSON path, or '-' for stdout",
     )
+
+    captions = subparsers.add_parser(
+        "generate-captions",
+        help="generate the deterministic four-tone caption contract from a C3 scene core",
+    )
+    captions.add_argument("--scene-core", required=True, help="C3 scene core JSON")
+    captions.add_argument(
+        "--output",
+        default="-",
+        help="output JSON path, or '-' for stdout",
+    )
     return parser
 
 
@@ -93,6 +110,20 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(scene_core, indent=2, sort_keys=True))
         else:
             write_scene_core_json(scene_core, args.output)
+        return 0
+
+    if args.command == "generate-captions":
+        try:
+            scene_core = load_scene_core_json(args.scene_core)
+            captions = generate_four_tone_captions(scene_core)
+        except CaptionGenerationError as exc:
+            print(f"caption-compass: {exc}", file=sys.stderr)
+            return 2
+
+        if args.output == "-":
+            print(json.dumps(captions, indent=2, sort_keys=True))
+        else:
+            write_captions_json(captions, args.output)
         return 0
 
     parser.error(f"unknown command: {args.command}")
