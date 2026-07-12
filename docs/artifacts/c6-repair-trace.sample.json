@@ -1,0 +1,110 @@
+{
+  "contract_boundary": {
+    "does_not_include": [
+      "multiple repair loops",
+      "human review workflow",
+      "Streamlit UI",
+      "Docker submission work",
+      "fine tuning",
+      "audio transcription",
+      "provider calls",
+      "leaderboard claims",
+      "objective truth proof"
+    ],
+    "factual_scene_core_mutated": false,
+    "local_paths_included": false,
+    "max_one_attempt_per_failed_caption": true,
+    "scores_are_heuristic": true,
+    "source_captions_mutated": false
+  },
+  "final_captions": {
+    "formal": "Timestamped video evidence is available, but the scene core contains no supported visual facts to describe.",
+    "humorous-non-tech": "The video has bookmarks, but no confirmed scene details yet.",
+    "humorous-tech": "Frame anchors compiled successfully; visual facts returned an empty list.",
+    "sarcastic": "The frame anchors showed up; the verified scene details did not."
+  },
+  "final_evaluation_summary": {
+    "failed_caption_keys": [],
+    "passed": true,
+    "repair_recommended": false
+  },
+  "gate": "C6",
+  "generation": {
+    "input_contracts": [
+      "c3.scene_core.v1",
+      "c4.four_tone_captions.v1",
+      "c5.evaluation.v1"
+    ],
+    "mode": "deterministic_stub",
+    "network_used": false,
+    "output_contract": "c6.repair_trace.v1",
+    "provider": null
+  },
+  "hard_stops": [],
+  "max_repair_attempts": 1,
+  "non_repairable_issue_codes": [
+    "malformed_output",
+    "scene_core_mismatch",
+    "unsafe_or_private_reference"
+  ],
+  "overall": {
+    "accepted_count": 1,
+    "final_failed_caption_keys": [],
+    "hard_stop_count": 0,
+    "max_attempts_per_caption_observed": 1,
+    "passed_after_repair": true,
+    "rejected_count": 0,
+    "repair_attempted_count": 1
+  },
+  "repair_history": [
+    {
+      "acceptance_reason": "accepted_all_thresholds_passed",
+      "accepted": true,
+      "after": {
+        "issues": [],
+        "scores": {
+          "clarity": 1.0,
+          "factual_accuracy": 1.0,
+          "tone_match": 1.0
+        },
+        "text": "The frame anchors showed up; the verified scene details did not."
+      },
+      "attempt": 1,
+      "before": {
+        "issues": [
+          "tone_mismatch"
+        ],
+        "scores": {
+          "clarity": 1.0,
+          "factual_accuracy": 1.0,
+          "tone_match": 0.65
+        },
+        "text": "Timestamped video evidence is available, but no verified scene details are available."
+      },
+      "caption_key": "sarcastic",
+      "repair_reason_codes": [
+        "tone_mismatch"
+      ],
+      "rewrite_hint_used": "Keep the same scene_core_id and evidence anchors. Make the tone clearly sarcastic using simple, judge-legible language.",
+      "status": "accepted"
+    }
+  ],
+  "repair_thresholds": {
+    "clarity_min": 0.7,
+    "factual_accuracy_min": 0.85,
+    "tone_match_min": 0.75
+  },
+  "repairable_issue_codes": [
+    "invented_fact",
+    "missing_core_fact",
+    "tone_bleed",
+    "tone_mismatch",
+    "uncertainty_overclaimed",
+    "unclear_joke",
+    "unsupported_inference_used"
+  ],
+  "sample_input_note": "Deterministic C6 repair fixture derived from the C4 sample by making the sarcastic caption intentionally too formal; no video or local path is included.",
+  "scene_core_id": "scene_core_2e1a050701be1888",
+  "schema_version": "c6.repair_trace.v1",
+  "source_video_id": "13153635_1080_1920_30fps.mp4"
+}

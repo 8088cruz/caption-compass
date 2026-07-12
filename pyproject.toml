@@ -33,4 +33,5 @@ markers = [
     "c3: C3 factual scene core contract tests",
     "c4: C4 four-tone caption contract tests",
     "c5: C5 accuracy and tone evaluator tests",
+    "c6: C6 bounded repair tests",
 ]
