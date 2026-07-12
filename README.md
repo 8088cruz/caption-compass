@@ -4,17 +4,18 @@ One factual scene core. Four tonal bearings. Built-in accuracy checks.
 
 Caption Compass is a public AMD Developer Hackathon: ACT II Track 2 video-captioning project. The project is scoped to preserve one style-free factual scene core and render exactly four required caption tones: formal, sarcastic, humorous-tech, and humorous-non-tech.
 
-At the current gate, this repository can sample timestamped frame evidence from a local video file, convert those anchors into a deterministic factual scene core contract, and render exactly four caption tones from that same core. It does not identify scene content from pixels; unsupported facts are marked unknown or excluded from caption claims.
+At the current gate, this repository can sample timestamped frame evidence from a local video file, convert those anchors into a deterministic factual scene core contract, render exactly four caption tones from that same core, and score those captions with a deterministic evaluator. It does not identify scene content from pixels; unsupported facts are marked unknown or excluded from caption claims. Evaluator scores are heuristic checks, not proof of objective truth.
 
 ## Current Status
 
-Gate status: **C4 implemented**
+Gate status: **C5 implemented**
 
 C0 artifact: [`docs/artifacts/c0-scope-boundary.md`](docs/artifacts/c0-scope-boundary.md)
 C1 artifact: [`docs/artifacts/c1-scaffold-proof.md`](docs/artifacts/c1-scaffold-proof.md)
 C2 artifact: [`docs/artifacts/c2-frame-evidence.sample.json`](docs/artifacts/c2-frame-evidence.sample.json)
 C3 artifact: [`docs/artifacts/c3-scene-core.sample.json`](docs/artifacts/c3-scene-core.sample.json)
 C4 artifact: [`docs/artifacts/c4-four-tone-captions.sample.json`](docs/artifacts/c4-four-tone-captions.sample.json)
+C5 artifact: [`docs/artifacts/c5-evaluation.sample.json`](docs/artifacts/c5-evaluation.sample.json)
 
 Implemented now:
 
@@ -32,13 +33,15 @@ Implemented now:
 - Deterministic four-tone caption contract from a C3 scene core
 - Exactly four tone outputs: formal, sarcastic, humorous-tech, and humorous-non-tech
 - Shared `scene_core_id` and fact lock across all four captions
+- Deterministic accuracy/tone evaluator for C3 scene core plus C4 captions
+- Per-tone factual accuracy, tone match, and clarity scores with issue codes, repair eligibility, and rewrite hints
 
 Not implemented yet:
 
 - Fireworks/Gemma provider calls
 - Visual scene interpretation/provider-generated observations
 - Provider-backed caption generation
-- Accuracy/tone evaluator
+- Automated caption repair
 - Retry/repair loop
 - Streamlit UI
 - Docker runtime
@@ -57,7 +60,7 @@ Run the current scaffold with:
 uv run caption-compass
 ```
 
-Expected output: JSON reporting `gate` as `C4` and `status` as `four-tone-caption-contract-ready`.
+Expected output: JSON reporting `gate` as `C5` and `status` as `accuracy-tone-evaluator-ready`.
 
 Sample timestamped frame evidence from a local video file:
 
@@ -83,9 +86,17 @@ uv run caption-compass generate-captions --scene-core docs/artifacts/c3-scene-co
 
 Expected output: public-safe JSON with `scene_core_id`, four required tones, tone rubrics, a shared fact lock, and unsupported inferences excluded from caption claims.
 
+Evaluate C4 captions against a C3 scene core:
+
+```bash
+uv run caption-compass evaluate-captions --scene-core docs/artifacts/c3-scene-core.sample.json --captions docs/artifacts/c4-four-tone-captions.sample.json --output evaluation.json
+```
+
+Expected output: public-safe JSON with `scene_core_id`, thresholds, per-tone factual accuracy/tone match/clarity scores, issue codes, repair eligibility flags, and rewrite hints where applicable. The evaluator does not repair captions.
+
 ## Test And Verification Commands
 
-Run the scaffold tests with:
+Run the full tests with:
 
 ```bash
 uv run pytest
@@ -107,6 +118,12 @@ Run the focused C4 tests with:
 
 ```bash
 uv run pytest -k 'caption or tone or generation'
+```
+
+Run the focused C5 tests with:
+
+```bash
+uv run pytest -k 'evaluator or scoring or accuracy or tone'
 ```
 
 Verify the C1 artifact exists with:
@@ -131,6 +148,12 @@ Verify the C4 artifact exists with:
 
 ```bash
 test -f docs/artifacts/c4-four-tone-captions.sample.json
+```
+
+Verify the C5 artifact exists with:
+
+```bash
+test -f docs/artifacts/c5-evaluation.sample.json
 ```
 
 ## Planned Product Behavior
@@ -165,7 +188,7 @@ test -f docs/artifacts/c4-four-tone-captions.sample.json
 | C2 | Implemented | Video upload and frame extraction |
 | C3 | Implemented | Factual scene core JSON contract |
 | C4 | Implemented | Four-tone caption generation |
-| C5 | Planned | Accuracy/tone evaluator |
+| C5 | Implemented | Accuracy/tone evaluator |
 | C6 | Planned | Retry/repair loop |
 | C7 | Planned | Demo UI and golden path |
 | C8 | Planned | Docker, README, slides/video script, submission readiness |
@@ -177,7 +200,7 @@ test -f docs/artifacts/c4-four-tone-captions.sample.json
 
 ## Known Limitations
 
-- This repo currently produces frame evidence metadata, a deterministic factual scene core contract, and deterministic four-tone caption contract output.
+- This repo currently produces frame evidence metadata, a deterministic factual scene core contract, deterministic four-tone caption contract output, and deterministic evaluator output.
 - `uv sync` is the supported setup path.
 - Manual test videos should stay outside git, for example under ignored `local_test_videos/`.
 - Frame evidence output does not include absolute local paths.
@@ -186,11 +209,12 @@ test -f docs/artifacts/c4-four-tone-captions.sample.json
 - C3 marks unsupported facts as unknown or unsupported instead of guessing.
 - C4 deterministic mode changes tone only; it does not add facts outside the C3 scene core.
 - If the C3 scene core has no supported visual facts, C4 captions state that limitation instead of inventing a scene.
+- C5 deterministic mode is a heuristic evaluator. Its scores help catch obvious accuracy, tone, and clarity issues but do not prove objective truth.
+- C5 does not rewrite or repair captions.
 - Live model behavior is not implemented yet.
-- No evaluator or repair behavior exists yet.
+- No repair behavior exists yet.
 - No demo UI exists yet.
 - Docker support is planned for C8.
-- The future evaluator will be a model-assisted quality check, not a proof of correctness.
 
 ## README Discipline
 
