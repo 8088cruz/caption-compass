@@ -14,6 +14,7 @@ from .captions import (
     write_captions_json,
 )
 from .evaluator import EvaluationError, evaluate_captions, load_captions_json, write_evaluation_json
+from .repair import RepairError, load_evaluation_json, repair_captions, write_repair_trace_json
 from .scaffold import build_scaffold_status
 from .scene_core import (
     SceneCoreError,
@@ -58,6 +59,15 @@ def build_parser() -> argparse.ArgumentParser:
     evaluation.add_argument("--scene-core", required=True, help="C3 scene core JSON")
     evaluation.add_argument("--captions", required=True, help="C4 four-tone captions JSON")
     evaluation.add_argument("--output", default="-", help="output JSON path, or '-' for stdout")
+
+    repair = subparsers.add_parser(
+        "repair-captions",
+        help="run one bounded repair pass for eligible failed captions",
+    )
+    repair.add_argument("--scene-core", required=True, help="C3 scene core JSON")
+    repair.add_argument("--captions", required=True, help="C4 four-tone captions JSON")
+    repair.add_argument("--evaluation", required=True, help="C5 evaluation JSON")
+    repair.add_argument("--output", default="-", help="output JSON path, or '-' for stdout")
     return parser
 
 
@@ -127,6 +137,22 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(evaluation, indent=2, sort_keys=True))
         else:
             write_evaluation_json(evaluation, args.output)
+        return 0
+
+    if args.command == "repair-captions":
+        try:
+            scene_core = load_scene_core_json(args.scene_core)
+            captions = load_captions_json(args.captions)
+            evaluation = load_evaluation_json(args.evaluation)
+            repair_trace = repair_captions(scene_core, captions, evaluation)
+        except (CaptionGenerationError, EvaluationError, RepairError) as exc:
+            print(f"caption-compass: {exc}", file=sys.stderr)
+            return 2
+
+        if args.output == "-":
+            print(json.dumps(repair_trace, indent=2, sort_keys=True))
+        else:
+            write_repair_trace_json(repair_trace, args.output)
         return 0
 
     parser.error(f"unknown command: {args.command}")
