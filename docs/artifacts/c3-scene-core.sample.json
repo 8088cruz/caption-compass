@@ -1,0 +1,205 @@
+{
+  "audio_notes": [],
+  "contract_boundary": {
+    "does_not_include": [
+      "tone generation",
+      "caption generation",
+      "evaluator scoring",
+      "repair loop",
+      "audio transcription",
+      "provider calls"
+    ],
+    "local_paths_included": false,
+    "style_free": true
+  },
+  "evidence_anchor_ids": [
+    "frame_0001",
+    "frame_0002",
+    "frame_0003",
+    "frame_0004",
+    "frame_0005",
+    "frame_0006",
+    "frame_0007",
+    "frame_0008"
+  ],
+  "evidence_anchors": [
+    {
+      "anchor_id": "frame_0001",
+      "frame_id": "frame_0001",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0001",
+      "timestamp_label": "00:04.698",
+      "timestamp_seconds": 4.698
+    },
+    {
+      "anchor_id": "frame_0002",
+      "frame_id": "frame_0002",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0002",
+      "timestamp_label": "00:14.094",
+      "timestamp_seconds": 14.094
+    },
+    {
+      "anchor_id": "frame_0003",
+      "frame_id": "frame_0003",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0003",
+      "timestamp_label": "00:23.490",
+      "timestamp_seconds": 23.49
+    },
+    {
+      "anchor_id": "frame_0004",
+      "frame_id": "frame_0004",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0004",
+      "timestamp_label": "00:32.886",
+      "timestamp_seconds": 32.886
+    },
+    {
+      "anchor_id": "frame_0005",
+      "frame_id": "frame_0005",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0005",
+      "timestamp_label": "00:42.281",
+      "timestamp_seconds": 42.281
+    },
+    {
+      "anchor_id": "frame_0006",
+      "frame_id": "frame_0006",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0006",
+      "timestamp_label": "00:51.677",
+      "timestamp_seconds": 51.677
+    },
+    {
+      "anchor_id": "frame_0007",
+      "frame_id": "frame_0007",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0007",
+      "timestamp_label": "01:01.073",
+      "timestamp_seconds": 61.073
+    },
+    {
+      "anchor_id": "frame_0008",
+      "frame_id": "frame_0008",
+      "frame_ref": "frame://13153635_1080_1920_30fps/frame_0008",
+      "timestamp_label": "01:10.469",
+      "timestamp_seconds": 70.469
+    }
+  ],
+  "gate": "C3",
+  "generation": {
+    "input_contract": "c2.frame_evidence.v1",
+    "mode": "deterministic_stub",
+    "network_used": false,
+    "output_contract": "c3.scene_core.v1",
+    "provider": null
+  },
+  "observed_entities": [],
+  "scene_core_id": "scene_core_2e1a050701be1888",
+  "schema_version": "c3.scene_core.v1",
+  "setting_or_context": {
+    "evidence_anchor_ids": [],
+    "support": "unsupported_from_c2_frame_metadata_only",
+    "value": null
+  },
+  "source_evidence": {
+    "evidence_anchor_count": 8,
+    "gate": "C2",
+    "schema_version": "c2.frame_evidence.v1",
+    "source_video_identifier": "13153635_1080_1920_30fps.mp4"
+  },
+  "source_video": {
+    "duration_seconds": 75.167,
+    "frame_rate": 30.0,
+    "height": 1920,
+    "identifier": "13153635_1080_1920_30fps.mp4",
+    "width": 1080
+  },
+  "summary": null,
+  "uncertainty_notes": [
+    {
+      "evidence_anchor_ids": [
+        "frame_0001",
+        "frame_0002",
+        "frame_0003",
+        "frame_0004",
+        "frame_0005",
+        "frame_0006",
+        "frame_0007",
+        "frame_0008"
+      ],
+      "note": "Frame anchors establish sampling times and stable refs, not visual-semantic facts."
+    },
+    {
+      "evidence_anchor_ids": [
+        "frame_0001",
+        "frame_0002",
+        "frame_0003",
+        "frame_0004",
+        "frame_0005",
+        "frame_0006",
+        "frame_0007",
+        "frame_0008"
+      ],
+      "note": "Observed entities, visible actions, and setting remain unknown until supported by explicit evidence."
+    }
+  ],
+  "unsupported_inferences": [
+    {
+      "claim": "specific visible people, objects, brands, or text",
+      "claim_type": "observed_entities",
+      "evidence_anchor_ids": [
+        "frame_0001",
+        "frame_0002",
+        "frame_0003",
+        "frame_0004",
+        "frame_0005",
+        "frame_0006",
+        "frame_0007",
+        "frame_0008"
+      ],
+      "reason": "C2 evidence supplies timestamped frame anchors only; deterministic C3 mode does not inspect image pixels or call a model provider."
+    },
+    {
+      "claim": "specific movements, interactions, or events",
+      "claim_type": "visible_actions",
+      "evidence_anchor_ids": [
+        "frame_0001",
+        "frame_0002",
+        "frame_0003",
+        "frame_0004",
+        "frame_0005",
+        "frame_0006",
+        "frame_0007",
+        "frame_0008"
+      ],
+      "reason": "C2 evidence supplies timestamped frame anchors only; deterministic C3 mode does not inspect image pixels or call a model provider."
+    },
+    {
+      "claim": "location, event context, mood, intent, or causality",
+      "claim_type": "setting_or_context",
+      "evidence_anchor_ids": [
+        "frame_0001",
+        "frame_0002",
+        "frame_0003",
+        "frame_0004",
+        "frame_0005",
+        "frame_0006",
+        "frame_0007",
+        "frame_0008"
+      ],
+      "reason": "C2 evidence supplies timestamped frame anchors only; deterministic C3 mode does not inspect image pixels or call a model provider."
+    },
+    {
+      "claim": "spoken words, soundtrack content, or audio cues",
+      "claim_type": "audio_or_speech",
+      "evidence_anchor_ids": [
+        "frame_0001",
+        "frame_0002",
+        "frame_0003",
+        "frame_0004",
+        "frame_0005",
+        "frame_0006",
+        "frame_0007",
+        "frame_0008"
+      ],
+      "reason": "C2 evidence does not include audio transcription."
+    }
+  ],
+  "visible_actions": [],
+  "visible_text": []
+}

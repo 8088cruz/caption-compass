@@ -1,0 +1,192 @@
+{
+  "captions": {
+    "formal": {
+      "caption": "Timestamped video evidence is available, but the scene core contains no supported visual facts to describe.",
+      "evidence_anchor_ids": [
+        "frame_0001",
+        "frame_0002",
+        "frame_0003",
+        "frame_0004",
+        "frame_0005",
+        "frame_0006",
+        "frame_0007",
+        "frame_0008"
+      ],
+      "fact_lock_id": "fact_lock_4b69f0232589c827",
+      "factual_claim_ids": [],
+      "scene_core_id": "scene_core_2e1a050701be1888",
+      "tone": "formal",
+      "tone_rubric": "Neutral, professional, concise, and fact-preserving."
+    },
+    "humorous-non-tech": {
+      "caption": "The video has bookmarks, but no confirmed scene details yet.",
+      "evidence_anchor_ids": [
+        "frame_0001",
+        "frame_0002",
+        "frame_0003",
+        "frame_0004",
+        "frame_0005",
+        "frame_0006",
+        "frame_0007",
+        "frame_0008"
+      ],
+      "fact_lock_id": "fact_lock_4b69f0232589c827",
+      "factual_claim_ids": [],
+      "scene_core_id": "scene_core_2e1a050701be1888",
+      "tone": "humorous-non-tech",
+      "tone_rubric": "General-audience light humor with no niche references and no new facts."
+    },
+    "humorous-tech": {
+      "caption": "Frame anchors compiled successfully; visual facts returned an empty list.",
+      "evidence_anchor_ids": [
+        "frame_0001",
+        "frame_0002",
+        "frame_0003",
+        "frame_0004",
+        "frame_0005",
+        "frame_0006",
+        "frame_0007",
+        "frame_0008"
+      ],
+      "fact_lock_id": "fact_lock_4b69f0232589c827",
+      "factual_claim_ids": [],
+      "scene_core_id": "scene_core_2e1a050701be1888",
+      "tone": "humorous-tech",
+      "tone_rubric": "Light software-oriented humor using common terms only, with no new facts."
+    },
+    "sarcastic": {
+      "caption": "The frame anchors showed up; the verified scene details did not.",
+      "evidence_anchor_ids": [
+        "frame_0001",
+        "frame_0002",
+        "frame_0003",
+        "frame_0004",
+        "frame_0005",
+        "frame_0006",
+        "frame_0007",
+        "frame_0008"
+      ],
+      "fact_lock_id": "fact_lock_4b69f0232589c827",
+      "factual_claim_ids": [],
+      "scene_core_id": "scene_core_2e1a050701be1888",
+      "tone": "sarcastic",
+      "tone_rubric": "Dry understatement without hostility, ridicule, or new facts."
+    }
+  },
+  "contract_boundary": {
+    "does_not_include": [
+      "evaluator scoring",
+      "repair loop",
+      "fine tuning",
+      "leaderboard claims",
+      "provider calls",
+      "new factual claims outside the scene core"
+    ],
+    "exactly_four_tones": true,
+    "local_paths_included": false,
+    "tone_keys": [
+      "formal",
+      "sarcastic",
+      "humorous-tech",
+      "humorous-non-tech"
+    ]
+  },
+  "fact_lock": {
+    "caption_claim_policy": "all tones use the same supported_claims list",
+    "fact_lock_id": "fact_lock_4b69f0232589c827",
+    "scene_core_id": "scene_core_2e1a050701be1888",
+    "supported_claims": []
+  },
+  "gate": "C4",
+  "generation": {
+    "input_contract": "c3.scene_core.v1",
+    "mode": "deterministic_stub",
+    "network_used": false,
+    "output_contract": "c4.four_tone_captions.v1",
+    "provider": null
+  },
+  "scene_core_id": "scene_core_2e1a050701be1888",
+  "schema_version": "c4.four_tone_captions.v1",
+  "source_scene_core": {
+    "evidence_anchor_ids": [
+      "frame_0001",
+      "frame_0002",
+      "frame_0003",
+      "frame_0004",
+      "frame_0005",
+      "frame_0006",
+      "frame_0007",
+      "frame_0008"
+    ],
+    "gate": "C3",
+    "schema_version": "c3.scene_core.v1"
+  },
+  "tone_order": [
+    "formal",
+    "sarcastic",
+    "humorous-tech",
+    "humorous-non-tech"
+  ],
+  "unsupported_inferences": [
+    {
+      "caption_policy": "excluded_from_caption_claims",
+      "claim": "specific visible people, objects, brands, or text",
+      "claim_type": "observed_entities",
+      "evidence_anchor_ids": [
+        "frame_0001",
+        "frame_0002",
+        "frame_0003",
+        "frame_0004",
+        "frame_0005",
+        "frame_0006",
+        "frame_0007",
+        "frame_0008"
+      ]
+    },
+    {
+      "caption_policy": "excluded_from_caption_claims",
+      "claim": "specific movements, interactions, or events",
+      "claim_type": "visible_actions",
+      "evidence_anchor_ids": [
+        "frame_0001",
+        "frame_0002",
+        "frame_0003",
+        "frame_0004",
+        "frame_0005",
+        "frame_0006",
+        "frame_0007",
+        "frame_0008"
+      ]
+    },
+    {
+      "caption_policy": "excluded_from_caption_claims",
+      "claim": "location, event context, mood, intent, or causality",
+      "claim_type": "setting_or_context",
+      "evidence_anchor_ids": [
+        "frame_0001",
+        "frame_0002",
+        "frame_0003",
+        "frame_0004",
+        "frame_0005",
+        "frame_0006",
+        "frame_0007",
+        "frame_0008"
+      ]
+    },
+    {
+      "caption_policy": "excluded_from_caption_claims",
+      "claim": "spoken words, soundtrack content, or audio cues",
+      "claim_type": "audio_or_speech",
+      "evidence_anchor_ids": [
+        "frame_0001",
+        "frame_0002",
+        "frame_0003",
+        "frame_0004",
+        "frame_0005",
+        "frame_0006",
+        "frame_0007",
+        "frame_0008"
+      ]
+    }
+  ]
+}
