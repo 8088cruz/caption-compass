@@ -10,12 +10,12 @@ from typing import Any
 
 
 def build_scaffold_status() -> dict[str, Any]:
-    """Return the public project status through C6."""
+    """Return the public project status through C6A."""
 
     return {
         "project": "Caption Compass",
-        "gate": "C6",
-        "status": "bounded-repair-ready",
+        "gate": "C6A",
+        "status": "provider-config-ready",
         "implemented": [
             "minimal Python package",
             "deterministic scaffold status command",
@@ -25,15 +25,19 @@ def build_scaffold_status() -> dict[str, Any]:
             "deterministic four-tone caption contract",
             "deterministic accuracy and tone evaluator",
             "one bounded deterministic repair pass",
+            "sanitized provider configuration boundary",
         ],
         "not_implemented": [
             "provider calls",
             "scene interpretation",
             "provider-backed caption generation",
+            "persisted frame artifacts for provider use",
+            "audio extraction",
+            "audio transcription",
             "demo UI",
             "Docker runtime",
         ],
-        "next_gate": "C7 planned: judge-visible trace UI",
+        "next_gate": "C6B planned: persisted frame artifacts for provider use",
     }
 
 

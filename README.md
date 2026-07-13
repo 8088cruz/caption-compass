@@ -4,11 +4,11 @@ One factual scene core. Four tonal bearings. Built-in accuracy checks and one bo
 
 Caption Compass is a public AMD Developer Hackathon: ACT II Track 2 video-captioning project. The project is scoped to preserve one style-free factual scene core and render exactly four required caption tones: formal, sarcastic, humorous-tech, and humorous-non-tech.
 
-At the current gate, this repository can sample timestamped frame evidence from a local video file, convert those anchors into a deterministic factual scene core contract, render exactly four caption tones from that same core, score those captions with a deterministic evaluator, and run one bounded repair pass for eligible failed captions. It does not identify scene content from pixels; unsupported facts are marked unknown or excluded from caption claims. Evaluator scores and repair decisions are heuristic checks, not proof of objective truth.
+At the current gate, this repository can sample timestamped frame evidence from a local video file, convert those anchors into a deterministic factual scene core contract, render exactly four caption tones from that same core, score those captions with a deterministic evaluator, run one bounded repair pass for eligible failed captions, and report sanitized provider configuration. It does not identify scene content from pixels; unsupported facts are marked unknown or excluded from caption claims. Evaluator scores and repair decisions are heuristic checks, not proof of objective truth. Provider-backed vision/audio is not implemented yet.
 
 ## Current Status
 
-Gate status: **C6 implemented**
+Gate status: **C6A implemented**
 
 C0 artifact: [`docs/artifacts/c0-scope-boundary.md`](docs/artifacts/c0-scope-boundary.md)
 C1 artifact: [`docs/artifacts/c1-scaffold-proof.md`](docs/artifacts/c1-scaffold-proof.md)
@@ -17,6 +17,7 @@ C3 artifact: [`docs/artifacts/c3-scene-core.sample.json`](docs/artifacts/c3-scen
 C4 artifact: [`docs/artifacts/c4-four-tone-captions.sample.json`](docs/artifacts/c4-four-tone-captions.sample.json)
 C5 artifact: [`docs/artifacts/c5-evaluation.sample.json`](docs/artifacts/c5-evaluation.sample.json)
 C6 artifact: [`docs/artifacts/c6-repair-trace.sample.json`](docs/artifacts/c6-repair-trace.sample.json)
+C6A artifact: [`docs/artifacts/c6a-provider-config.sample.json`](docs/artifacts/c6a-provider-config.sample.json)
 
 Implemented now:
 
@@ -38,14 +39,49 @@ Implemented now:
 - Per-tone factual accuracy, tone match, and clarity scores with issue codes, repair eligibility, and rewrite hints
 - One bounded deterministic repair pass for failed repair-eligible captions
 - Before/after repair trace with scores, issue codes, accepted/rejected status, and final captions
+- Sanitized provider configuration boundary for `stub` and `fireworks`
+- `.env.example` placeholders and local secret/output ignore rules
 
 Not implemented yet:
 
 - Fireworks/Gemma provider calls
 - Visual scene interpretation/provider-generated observations
 - Provider-backed caption generation
+- Persisted frame artifacts for provider use
+- Audio extraction or transcription
 - Streamlit UI
 - Docker runtime
+
+## Provider Configuration
+
+Default mode is deterministic stub mode and does not use the network:
+
+```bash
+uv run caption-compass provider-status
+```
+
+Expected output: public-safe JSON reporting provider mode, configured model names if present, whether an API key is present, readiness warnings, and `network_used: false`.
+
+For local provider experiments, copy `.env.example` to `.env` and set local values:
+
+```bash
+cp .env.example .env
+```
+
+Required environment variables for future Fireworks provider readiness:
+
+```bash
+CAPTION_COMPASS_PROVIDER=fireworks
+FIREWORKS_API_KEY=replace-with-your-local-key
+CAPTION_COMPASS_VISION_MODEL=replace-with-hackathon-vision-model
+CAPTION_COMPASS_TEXT_MODEL=replace-with-hackathon-text-model
+CAPTION_COMPASS_AUDIO_MODEL=replace-with-hackathon-audio-model
+CAPTION_COMPASS_PROVIDER_TIMEOUT_SECONDS=60
+```
+
+`.env` is ignored and must not be committed. Provider status output never includes the raw API key.
+
+Credentials alone are not enough for pixel/audio understanding. C6A only adds the provider configuration boundary. Vision observations, persisted frames for provider use, audio extraction, and transcription remain future work.
 
 ## Run Command
 
@@ -61,7 +97,7 @@ Run the current scaffold with:
 uv run caption-compass
 ```
 
-Expected output: JSON reporting `gate` as `C6` and `status` as `bounded-repair-ready`.
+Expected output: JSON reporting `gate` as `C6A` and `status` as `provider-config-ready`.
 
 Sample timestamped frame evidence from a local video file:
 
@@ -69,15 +105,11 @@ Sample timestamped frame evidence from a local video file:
 uv run caption-compass sample-frames --video local_test_videos/sample.mp4 --output frame-evidence.json
 ```
 
-Expected output: public-safe JSON metadata with sanitized source identifier, video duration when available, sampled frame timestamps, stable `frame://...` refs, extraction status, and warnings.
-
 Build a deterministic factual scene core contract from C2 frame evidence:
 
 ```bash
 uv run caption-compass build-scene-core --evidence docs/artifacts/c2-frame-evidence.sample.json --output scene-core.json
 ```
-
-Expected output: public-safe JSON with a stable `scene_core_id`, preserved evidence anchors, empty observed facts when unsupported, explicit unsupported inferences, and uncertainty notes.
 
 Generate exactly four deterministic captions from a C3 scene core:
 
@@ -85,23 +117,17 @@ Generate exactly four deterministic captions from a C3 scene core:
 uv run caption-compass generate-captions --scene-core docs/artifacts/c3-scene-core.sample.json --output captions.json
 ```
 
-Expected output: public-safe JSON with `scene_core_id`, four required tones, tone rubrics, a shared fact lock, and unsupported inferences excluded from caption claims.
-
 Evaluate C4 captions against a C3 scene core:
 
 ```bash
 uv run caption-compass evaluate-captions --scene-core docs/artifacts/c3-scene-core.sample.json --captions docs/artifacts/c4-four-tone-captions.sample.json --output evaluation.json
 ```
 
-Expected output: public-safe JSON with `scene_core_id`, thresholds, per-tone factual accuracy/tone match/clarity scores, issue codes, repair eligibility flags, and rewrite hints where applicable. The evaluator does not repair captions.
-
 Run one bounded repair pass from C3, C4, and C5 contracts:
 
 ```bash
 uv run caption-compass repair-captions --scene-core docs/artifacts/c3-scene-core.sample.json --captions docs/artifacts/c4-four-tone-captions.sample.json --evaluation docs/artifacts/c5-evaluation.sample.json --output repair-trace.json
 ```
-
-Expected output: public-safe JSON with `max_repair_attempts` set to `1`, repair thresholds, repair history, before/after scores for attempted repairs, accepted/rejected status, and final captions. If the supplied C5 evaluation already passes, no repair is attempted.
 
 ## Test And Verification Commands
 
@@ -111,71 +137,26 @@ Run the full tests with:
 uv run pytest
 ```
 
-Run the focused C2 tests with:
+Run the focused C6A provider config tests with:
 
 ```bash
-uv run pytest -k 'video or frame or ingestion'
+uv run pytest -k 'provider or config or fireworks'
 ```
 
-Run the focused C3 tests with:
+Verify the C6A artifact exists with:
 
 ```bash
-uv run pytest -k 'scene_core or factual or contract'
+test -f docs/artifacts/c6a-provider-config.sample.json
 ```
 
-Run the focused C4 tests with:
+Optional provider status smoke tests:
 
 ```bash
-uv run pytest -k 'caption or tone or generation'
+uv run caption-compass provider-status
+CAPTION_COMPASS_PROVIDER=fireworks FIREWORKS_API_KEY=local-test-redacted CAPTION_COMPASS_VISION_MODEL=placeholder uv run caption-compass provider-status
 ```
 
-Run the focused C5 tests with:
-
-```bash
-uv run pytest -k 'evaluator or scoring or accuracy or tone'
-```
-
-Run the focused C6 tests with:
-
-```bash
-uv run pytest -k 'repair or retry or evaluator'
-```
-
-Verify the C1 artifact exists with:
-
-```bash
-test -f docs/artifacts/c1-scaffold-proof.md
-```
-
-Verify the C2 artifact exists with:
-
-```bash
-test -f docs/artifacts/c2-frame-evidence.sample.json
-```
-
-Verify the C3 artifact exists with:
-
-```bash
-test -f docs/artifacts/c3-scene-core.sample.json
-```
-
-Verify the C4 artifact exists with:
-
-```bash
-test -f docs/artifacts/c4-four-tone-captions.sample.json
-```
-
-Verify the C5 artifact exists with:
-
-```bash
-test -f docs/artifacts/c5-evaluation.sample.json
-```
-
-Verify the C6 artifact exists with:
-
-```bash
-test -f docs/artifacts/c6-repair-trace.sample.json
-```
+The second command should report `"api_key_present": true` without printing the key.
 
 ## Planned Product Behavior
 
@@ -211,6 +192,10 @@ test -f docs/artifacts/c6-repair-trace.sample.json
 | C4 | Implemented | Four-tone caption generation |
 | C5 | Implemented | Accuracy/tone evaluator |
 | C6 | Implemented | One bounded repair pass |
+| C6A | Implemented | Provider configuration boundary |
+| C6B | Planned | Persisted frame artifacts for provider use |
+| C6C | Planned | Vision observations from sampled frames |
+| C6D | Planned | Scene core fusion from visual observations |
 | C7 | Planned | Demo UI and golden path |
 | C8 | Planned | Docker, README, slides/video script, submission readiness |
 
@@ -221,20 +206,23 @@ test -f docs/artifacts/c6-repair-trace.sample.json
 
 ## Known Limitations
 
-- This repo currently produces frame evidence metadata, a deterministic factual scene core contract, deterministic four-tone caption contract output, deterministic evaluator output, and a deterministic one-pass repair trace.
+- This repo currently produces frame evidence metadata, a deterministic factual scene core contract, deterministic four-tone caption contract output, deterministic evaluator output, a deterministic one-pass repair trace, and sanitized provider configuration status.
 - `uv sync` is the supported setup path.
 - Manual test videos should stay outside git, for example under ignored `local_test_videos/`.
+- Local provider outputs should stay outside git, for example under ignored `local_test_outputs/`.
+- `.env` is ignored and must not be committed.
+- Provider status never prints raw API keys.
+- C6A does not make Fireworks/Gemma calls.
+- C6A does not add pixel/audio understanding.
 - Frame evidence output does not include absolute local paths.
 - C2 does not interpret scene content.
 - C3 deterministic mode does not inspect image pixels or identify entities, actions, settings, emotions, or intent.
 - C3 marks unsupported facts as unknown or unsupported instead of guessing.
 - C4 deterministic mode changes tone only; it does not add facts outside the C3 scene core.
-- If the C3 scene core has no supported visual facts, C4 captions state that limitation instead of inventing a scene.
 - C5 deterministic mode is a heuristic evaluator. Its scores help catch obvious accuracy, tone, and clarity issues but do not prove objective truth.
-- C5 does not rewrite or repair captions.
 - C6 repairs only failed captions marked repair-eligible by C5 and attempts at most one repair per failed caption.
-- C6 does not run an autonomous or repeated repair loop and does not mutate the factual scene core.
 - Live model behavior is not implemented yet.
+- No persisted frame artifact provider seam exists yet.
 - No demo UI exists yet.
 - Docker support is planned for C8.
 

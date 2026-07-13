@@ -14,6 +14,7 @@ from .captions import (
     write_captions_json,
 )
 from .evaluator import EvaluationError, evaluate_captions, load_captions_json, write_evaluation_json
+from .provider_config import ProviderConfigError, build_provider_status
 from .repair import RepairError, load_evaluation_json, repair_captions, write_repair_trace_json
 from .scaffold import build_scaffold_status
 from .scene_core import (
@@ -28,6 +29,11 @@ from .video_ingestion import VideoIngestionError, extract_frame_evidence, write_
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="caption-compass")
     subparsers = parser.add_subparsers(dest="command")
+
+    subparsers.add_parser(
+        "provider-status",
+        help="print sanitized provider configuration status without using the network",
+    )
 
     sample_frames = subparsers.add_parser(
         "sample-frames",
@@ -77,6 +83,14 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command is None:
         print(json.dumps(build_scaffold_status(), indent=2, sort_keys=True))
+        return 0
+
+    if args.command == "provider-status":
+        try:
+            print(json.dumps(build_provider_status(), indent=2, sort_keys=True))
+        except ProviderConfigError as exc:
+            print(f"caption-compass: {exc}", file=sys.stderr)
+            return 2
         return 0
 
     if args.command == "sample-frames":

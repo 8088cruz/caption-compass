@@ -1,0 +1,17 @@
+{
+  "api_key_present": false,
+  "configured_models": {
+    "audio": null,
+    "text": null,
+    "vision": null
+  },
+  "gate": "C6A",
+  "local_paths_included": false,
+  "network_enabled": false,
+  "network_used": false,
+  "provider": "stub",
+  "provider_ready": true,
+  "schema_version": "c6a.provider_config.v1",
+  "timeout_seconds": 60,
+  "warnings": []
+}
