@@ -1,0 +1,55 @@
+{
+  "frames": [
+    {
+      "frame_id": "frame_0001",
+      "frame_ref": "frame://synthetic-c6b-fixture/frame_0001",
+      "observed_entities": [],
+      "provider_evidence": {
+        "local_paths_included": false,
+        "mode": "stub",
+        "source_video_id": "synthetic-c6b-fixture"
+      },
+      "setting_or_context": null,
+      "timestamp_seconds": 0.25,
+      "uncertainty_notes": [
+        "Stub provider mode does not inspect pixels; visual content remains unknown."
+      ],
+      "unsupported_inferences": [
+        "Any claim about objects, actions, text, setting, emotion, identity, or intent is unsupported until provider vision is used."
+      ],
+      "visible_actions": [],
+      "visible_text": []
+    },
+    {
+      "frame_id": "frame_0002",
+      "frame_ref": "frame://synthetic-c6b-fixture/frame_0002",
+      "observed_entities": [],
+      "provider_evidence": {
+        "local_paths_included": false,
+        "mode": "stub",
+        "source_video_id": "synthetic-c6b-fixture"
+      },
+      "setting_or_context": null,
+      "timestamp_seconds": 0.75,
+      "uncertainty_notes": [
+        "Stub provider mode does not inspect pixels; visual content remains unknown."
+      ],
+      "unsupported_inferences": [
+        "Any claim about objects, actions, text, setting, emotion, identity, or intent is unsupported until provider vision is used."
+      ],
+      "visible_actions": [],
+      "visible_text": []
+    }
+  ],
+  "gate": "C6C",
+  "local_paths_included": false,
+  "provider": {
+    "local_paths_included": false,
+    "model": "stub",
+    "name": "stub",
+    "network_used": false
+  },
+  "schema_version": "c6c.frame_observations.v1",
+  "source_video_id": "synthetic-c6b-fixture",
+  "warnings": []
+}

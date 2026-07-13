@@ -24,6 +24,7 @@ from .scene_core import (
     write_scene_core_json,
 )
 from .video_ingestion import VideoIngestionError, extract_frame_evidence, write_evidence_json
+from .vision_observations import VisionObservationError, observe_frames, write_frame_observations_json
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -53,6 +54,14 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="local output directory for persisted frames; used only with --persist-frames",
     )
+
+    observe = subparsers.add_parser(
+        "observe-frames",
+        help="produce structured per-frame observations from C2 evidence and persisted frame JPGs",
+    )
+    observe.add_argument("--evidence", required=True, help="C2 frame evidence JSON")
+    observe.add_argument("--frames-dir", default=None, help="directory containing persisted frame JPGs")
+    observe.add_argument("--output", default="-", help="output JSON path, or '-' for stdout")
 
     scene_core = subparsers.add_parser(
         "build-scene-core",
@@ -122,6 +131,23 @@ def main(argv: list[str] | None = None) -> int:
             write_evidence_json(evidence, args.output)
         return 0
 
+    if args.command == "observe-frames":
+        try:
+            frame_evidence = load_frame_evidence_json(args.evidence)
+            observations = observe_frames(
+                frame_evidence,
+                frames_dir=Path(args.frames_dir) if args.frames_dir else None,
+            )
+        except (SceneCoreError, ProviderConfigError, VisionObservationError) as exc:
+            print(f"caption-compass: {exc}", file=sys.stderr)
+            return 2
+
+        if args.output == "-":
+            print(json.dumps(observations, indent=2, sort_keys=True))
+        else:
+            write_frame_observations_json(observations, args.output)
+        return 0
+
     if args.command == "build-scene-core":
         try:
             frame_evidence = load_frame_evidence_json(args.evidence)
@@ -129,6 +155,7 @@ def main(argv: list[str] | None = None) -> int:
         except SceneCoreError as exc:
             print(f"caption-compass: {exc}", file=sys.stderr)
             return 2
+
         if args.output == "-":
             print(json.dumps(scene_core, indent=2, sort_keys=True))
         else:
@@ -142,6 +169,7 @@ def main(argv: list[str] | None = None) -> int:
         except CaptionGenerationError as exc:
             print(f"caption-compass: {exc}", file=sys.stderr)
             return 2
+
         if args.output == "-":
             print(json.dumps(captions, indent=2, sort_keys=True))
         else:
@@ -156,6 +184,7 @@ def main(argv: list[str] | None = None) -> int:
         except (CaptionGenerationError, EvaluationError) as exc:
             print(f"caption-compass: {exc}", file=sys.stderr)
             return 2
+
         if args.output == "-":
             print(json.dumps(evaluation, indent=2, sort_keys=True))
         else:
@@ -171,6 +200,7 @@ def main(argv: list[str] | None = None) -> int:
         except (CaptionGenerationError, EvaluationError, RepairError) as exc:
             print(f"caption-compass: {exc}", file=sys.stderr)
             return 2
+
         if args.output == "-":
             print(json.dumps(repair_trace, indent=2, sort_keys=True))
         else:

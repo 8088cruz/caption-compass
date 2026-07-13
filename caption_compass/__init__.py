@@ -12,6 +12,7 @@ from .repair import repair_captions
 from .scaffold import build_scaffold_status
 from .scene_core import build_scene_core
 from .video_ingestion import extract_frame_evidence
+from .vision_observations import observe_frames
 
 __all__ = [
     "build_provider_status",
@@ -22,6 +23,7 @@ __all__ = [
     "generate_four_tone_captions",
     "get_fireworks_api_key",
     "load_provider_config",
+    "observe_frames",
     "repair_captions",
     "validate_provider_ready",
 ]
