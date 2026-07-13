@@ -2,12 +2,14 @@
 
 This module extracts evidence anchors only. It does not interpret scene
 content, transcribe audio, generate captions, evaluate tone, or call providers.
+
+C6B adds an optional persisted-frame seam for future provider use. Public JSON
+still avoids absolute local paths.
 """
 
 from __future__ import annotations
 
 import json
-import math
 import re
 import shutil
 import subprocess
@@ -149,11 +151,38 @@ def sample_timestamps(duration_seconds: float | None, *, frame_count: int = 4) -
         return [0.0]
 
     safe_duration = max(duration_seconds, 0.001)
-    count = frame_count
     return [
-        round(min(((index + 0.5) * safe_duration) / count, max(safe_duration - 0.001, 0.0)), 3)
-        for index in range(count)
+        round(min(((index + 0.5) * safe_duration) / frame_count, max(safe_duration - 0.001, 0.0)), 3)
+        for index in range(frame_count)
     ]
+
+
+def _local_output_run_id(output_dir: Path) -> str:
+    return re.sub(r"[^A-Za-z0-9_-]+", "-", output_dir.name.strip()).strip("-").lower() or "run"
+
+
+def _default_output_dir(source_slug: str) -> Path:
+    return Path("local_test_outputs") / source_slug
+
+
+def _build_frame_record(
+    *,
+    source_slug: str,
+    index: int,
+    timestamp: float,
+    persisted: bool,
+    run_id: str | None,
+) -> dict[str, Any]:
+    frame_id = f"frame_{index:04d}"
+    frame: dict[str, Any] = {
+        "frame_id": frame_id,
+        "frame_ref": f"frame://{source_slug}/{frame_id}",
+        "timestamp_seconds": timestamp,
+        "timestamp_label": _format_timestamp(timestamp),
+    }
+    if persisted and run_id:
+        frame["persisted_frame_ref"] = f"local-output://{run_id}/frames/{frame_id}.jpg"
+    return frame
 
 
 def extract_frame_evidence(
@@ -163,8 +192,15 @@ def extract_frame_evidence(
     source_identifier: str | None = None,
     ffmpeg_bin: str = "ffmpeg",
     ffprobe_bin: str = "ffprobe",
+    persist_frames: bool = False,
+    output_dir: str | Path | None = None,
 ) -> dict[str, Any]:
-    """Extract timestamped frame anchors and return public-safe metadata."""
+    """Extract timestamped frame anchors and return public-safe metadata.
+
+    When ``persist_frames`` is true, sampled JPGs are written under
+    ``<output_dir>/frames`` for future provider use. Returned JSON includes
+    safe local-output refs, never absolute local paths.
+    """
 
     path = Path(video_path)
     if not path.is_file():
@@ -177,10 +213,24 @@ def extract_frame_evidence(
     probe = probe_video(path, ffprobe_bin=ffprobe_bin)
     timestamps = sample_timestamps(probe.duration_seconds, frame_count=frame_count)
 
-    with tempfile.TemporaryDirectory(prefix="caption-compass-c2-") as temp_dir:
-        temp_path = Path(temp_dir)
+    run_id: str | None = None
+    persisted_output_ref: str | None = None
+
+    if persist_frames:
+        root_dir = Path(output_dir) if output_dir is not None else _default_output_dir(source_slug)
+        frames_dir = root_dir / "frames"
+        frames_dir.mkdir(parents=True, exist_ok=True)
+        run_id = _local_output_run_id(root_dir)
+        persisted_output_ref = f"local-output://{run_id}/frames"
+        cleanup_context = None
+        extraction_dir = frames_dir
+    else:
+        cleanup_context = tempfile.TemporaryDirectory(prefix="caption-compass-c2-")
+        extraction_dir = Path(cleanup_context.name)
+
+    try:
         for index, timestamp in enumerate(timestamps, start=1):
-            frame_path = temp_path / f"frame_{index:04d}.jpg"
+            frame_path = extraction_dir / f"frame_{index:04d}.jpg"
             command = [
                 ffmpeg_bin,
                 "-nostdin",
@@ -199,14 +249,18 @@ def extract_frame_evidence(
             _run(command, f"Could not extract frame {index} from {source_id}")
             if not frame_path.is_file() or frame_path.stat().st_size == 0:
                 raise InvalidVideoError(f"Could not extract frame {index} from {source_id}.")
+    finally:
+        if cleanup_context is not None:
+            cleanup_context.cleanup()
 
     frames = [
-        {
-            "frame_id": f"frame_{index:04d}",
-            "frame_ref": f"frame://{source_slug}/frame_{index:04d}",
-            "timestamp_seconds": timestamp,
-            "timestamp_label": _format_timestamp(timestamp),
-        }
+        _build_frame_record(
+            source_slug=source_slug,
+            index=index,
+            timestamp=timestamp,
+            persisted=persist_frames,
+            run_id=run_id,
+        )
         for index, timestamp in enumerate(timestamps, start=1)
     ]
 
@@ -230,6 +284,11 @@ def extract_frame_evidence(
             "strategy": "center-of-equal-time-segments",
         },
         "frames": frames,
+        "persistence": {
+            "frames_persisted": persist_frames,
+            "output_ref": persisted_output_ref,
+            "local_paths_included": False,
+        },
         "extraction": {
             "status": "ok",
             "tooling": "ffmpeg/ffprobe",

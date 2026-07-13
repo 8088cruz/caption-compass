@@ -1,0 +1,57 @@
+{
+  "extraction": {
+    "local_paths_included": false,
+    "status": "ok",
+    "tooling": "ffmpeg/ffprobe",
+    "warnings": []
+  },
+  "frames": [
+    {
+      "frame_id": "frame_0001",
+      "frame_ref": "frame://synthetic-c6b-fixture/frame_0001",
+      "persisted_frame_ref": "local-output://synthetic-c6b-run/frames/frame_0001.jpg",
+      "timestamp_label": "00:00.250",
+      "timestamp_seconds": 0.25
+    },
+    {
+      "frame_id": "frame_0002",
+      "frame_ref": "frame://synthetic-c6b-fixture/frame_0002",
+      "persisted_frame_ref": "local-output://synthetic-c6b-run/frames/frame_0002.jpg",
+      "timestamp_label": "00:00.750",
+      "timestamp_seconds": 0.75
+    },
+    {
+      "frame_id": "frame_0003",
+      "frame_ref": "frame://synthetic-c6b-fixture/frame_0003",
+      "persisted_frame_ref": "local-output://synthetic-c6b-run/frames/frame_0003.jpg",
+      "timestamp_label": "00:01.250",
+      "timestamp_seconds": 1.25
+    },
+    {
+      "frame_id": "frame_0004",
+      "frame_ref": "frame://synthetic-c6b-fixture/frame_0004",
+      "persisted_frame_ref": "local-output://synthetic-c6b-run/frames/frame_0004.jpg",
+      "timestamp_label": "00:01.750",
+      "timestamp_seconds": 1.75
+    }
+  ],
+  "gate": "C6B",
+  "persistence": {
+    "frames_persisted": true,
+    "local_paths_included": false,
+    "output_ref": "local-output://synthetic-c6b-run/frames"
+  },
+  "sampling": {
+    "requested_frame_count": 4,
+    "sampled_frame_count": 4,
+    "strategy": "center-of-equal-time-segments"
+  },
+  "schema_version": "c6b.persisted_frame_evidence.v1",
+  "source_video": {
+    "duration_seconds": 2.0,
+    "frame_rate": 10.0,
+    "height": 48,
+    "identifier": "synthetic-c6b-fixture.mp4",
+    "width": 64
+  }
+}

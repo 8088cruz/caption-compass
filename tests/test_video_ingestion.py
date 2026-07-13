@@ -17,7 +17,7 @@ from caption_compass.video_ingestion import (
 
 def _require_ffmpeg() -> None:
     if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
-        raise unittest.SkipTest("ffmpeg and ffprobe are required for C2 video tests")
+        raise unittest.SkipTest("ffmpeg and ffprobe are required for C2/C6B video tests")
 
 
 def _write_synthetic_video(path: Path) -> None:
@@ -67,12 +67,85 @@ class VideoIngestionTests(unittest.TestCase):
         self.assertEqual(evidence["sampling"]["sampled_frame_count"], 3)
         self.assertEqual(evidence["extraction"]["status"], "ok")
         self.assertFalse(evidence["extraction"]["local_paths_included"])
+        self.assertFalse(evidence["persistence"]["frames_persisted"])
+        self.assertFalse(evidence["persistence"]["local_paths_included"])
         self.assertNotIn(temp_dir, payload)
         self.assertEqual(
             [frame["frame_id"] for frame in evidence["frames"]],
             ["frame_0001", "frame_0002", "frame_0003"],
         )
         self.assertTrue(all(frame["frame_ref"].startswith("frame://") for frame in evidence["frames"]))
+
+    def test_persisted_frames_are_written_but_not_exposed_as_absolute_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            video_path = root / "fixture.mp4"
+            output_dir = root / "local_test_outputs" / "manual-run"
+            _write_synthetic_video(video_path)
+
+            evidence = extract_frame_evidence(
+                video_path,
+                frame_count=2,
+                source_identifier="manual fixture.mp4",
+                persist_frames=True,
+                output_dir=output_dir,
+            )
+
+            expected_files = [
+                output_dir / "frames" / "frame_0001.jpg",
+                output_dir / "frames" / "frame_0002.jpg",
+            ]
+            for frame_path in expected_files:
+                self.assertTrue(frame_path.is_file(), frame_path)
+                self.assertGreater(frame_path.stat().st_size, 0)
+
+            payload = json.dumps(evidence, sort_keys=True)
+
+        self.assertTrue(evidence["persistence"]["frames_persisted"])
+        self.assertEqual(evidence["persistence"]["output_ref"], "local-output://manual-run/frames")
+        self.assertFalse(evidence["persistence"]["local_paths_included"])
+        self.assertNotIn(temp_dir, payload)
+        self.assertTrue(
+            all(frame["persisted_frame_ref"].startswith("local-output://manual-run/frames/") for frame in evidence["frames"])
+        )
+
+    def test_cli_can_persist_frames_to_ignored_local_output(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            video_path = root / "fixture.mp4"
+            output_dir = root / "local_test_outputs" / "cli-run"
+            _write_synthetic_video(video_path)
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "caption_compass",
+                    "sample-frames",
+                    "--video",
+                    str(video_path),
+                    "--frame-count",
+                    "2",
+                    "--source-id",
+                    "cli fixture.mp4",
+                    "--persist-frames",
+                    "--output-dir",
+                    str(output_dir),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertTrue((output_dir / "frames" / "frame_0001.jpg").is_file())
+            self.assertTrue((output_dir / "frames" / "frame_0002.jpg").is_file())
+
+        evidence = json.loads(result.stdout)
+        self.assertEqual(evidence["gate"], "C2")
+        self.assertEqual(evidence["source_video"]["identifier"], "cli-fixture.mp4")
+        self.assertEqual(evidence["sampling"]["sampled_frame_count"], 2)
+        self.assertTrue(evidence["persistence"]["frames_persisted"])
+        self.assertEqual(evidence["persistence"]["output_ref"], "local-output://cli-run/frames")
+        self.assertNotIn(temp_dir, result.stdout)
 
     def test_invalid_video_error_is_clear_without_absolute_path(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -120,6 +193,7 @@ class VideoIngestionTests(unittest.TestCase):
         self.assertEqual(evidence["gate"], "C2")
         self.assertEqual(evidence["source_video"]["identifier"], "cli-fixture.mp4")
         self.assertEqual(evidence["sampling"]["sampled_frame_count"], 2)
+        self.assertFalse(evidence["persistence"]["frames_persisted"])
         self.assertNotIn(temp_dir, result.stdout)
 
 

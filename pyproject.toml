@@ -35,4 +35,5 @@ markers = [
     "c5: C5 accuracy and tone evaluator tests",
     "c6: C6 bounded repair tests",
     "c6a: C6A provider configuration boundary tests",
+    "c6b: C6B persisted frame artifact tests",
 ]
